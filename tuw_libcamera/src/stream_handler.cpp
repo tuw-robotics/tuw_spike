@@ -9,7 +9,7 @@ namespace tuw_libcamera {
 
 std::string topic_name(const Params::Streams::MapStreamRoles &params,
                        std::string suffix = "") {
-    std::string topic = "~/camera";
+    std::string topic = "image";
     if (!params.sub_topic.empty())
         topic += "/" + params.sub_topic;
     if (!suffix.empty())

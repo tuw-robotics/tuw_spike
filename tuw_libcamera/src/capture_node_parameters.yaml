@@ -5,6 +5,18 @@ tuw_libcamera:
     default_value: "",
     read_only: true
   }
+  camera_info_name: {
+    type: string,
+    description: "Camera name to use for camera_info topic, empty to disable camera info topic.",
+    default_value: "",
+    read_only: true
+  }
+  camera_info_url: {
+    type: string,
+    description: "Camera name to use for camera_info topic, empty to use default url.",
+    default_value: "",
+    read_only: true
+  }
   stream_roles: {
     type: string_array,
     default_value: [ "video" ],

@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(camera_info_manager REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(generate_parameter_library REQUIRED)
 
@@ -35,7 +36,8 @@ ament_target_dependencies(tuw_libcamera_capture_node
   rclcpp_components
   sensor_msgs
   OpenCV
-  image_transport)
+  image_transport
+  camera_info_manager)
 
 target_link_libraries(tuw_libcamera_capture_node
   PkgConfig::LibCamera

@@ -8,7 +8,9 @@ def generate_launch_description():
         package='tuw_libcamera',
         plugin='tuw_libcamera::CaptureNode',
         extra_arguments=[{'use_intra_process_comms': True}],
+        namespace="camera",
         parameters=[{
+            "camera_info_name": "camera",
             "stream_roles": ["video"],
             "streams.video": {
                 "format": "YUYV",

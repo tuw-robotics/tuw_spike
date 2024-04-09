@@ -1,3 +1,4 @@
+#include <camera_info_manager/camera_info_manager.hpp>
 #include <cstdio>
 #include <libcamera/libcamera.h>
 #include <opencv2/core/mat.hpp>
@@ -57,9 +58,20 @@ class CaptureNode : public rclcpp::Node {
         size_t num_requests = allocate_buffers();
         create_requests(num_requests);
 
+        if (!params.camera_info_name.empty()) {
+            cam_info_manager =
+                std::make_unique<camera_info_manager::CameraInfoManager>(
+                    this, params.camera_info_name, params.camera_info_url);
+            if (cam_info_manager->isCalibrated()) {
+                RCLCPP_INFO(get_logger(), "Camera calibration data loaded.");
+            }
+            cam_info_publisher =
+                create_publisher<camera_info_manager::CameraInfo>(
+                    "camera_info", rclcpp::ParametersQoS());
+        }
+
         // Connect to signal, start capture and queue requests
-        camera->requestCompleted.connect(this,
-                                         &CaptureNode::request_completed);
+        camera->requestCompleted.connect(this, &CaptureNode::request_completed);
         camera->start();
         for (const auto &request : requests) {
             camera->queueRequest(request.get());
@@ -89,6 +101,10 @@ class CaptureNode : public rclcpp::Node {
     std::vector<BufferContext> buffer_ctx;
     std::vector<std::unique_ptr<StreamHandler>> stream_handlers;
     std::vector<uint32_t> request_control_seq;
+
+    std::unique_ptr<camera_info_manager::CameraInfoManager> cam_info_manager;
+    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr
+        cam_info_publisher;
 
     void add_buffer(size_t stream_idx, libcamera::FrameBuffer *buffer) {
         buffer->setCookie(buffer_ctx.size());
@@ -268,6 +284,12 @@ class CaptureNode : public rclcpp::Node {
         for (auto [stream, buffer] : request->buffers()) {
             auto &ctx = buffer_context(buffer);
             stream_handlers.at(ctx.stream_idx())->publish_buffer(ctx, header);
+        }
+
+        if (cam_info_manager) {
+            auto info = cam_info_manager->getCameraInfo();
+            info.header = header;
+            cam_info_publisher->publish(info);
         }
 
         request->reuse(libcamera::Request::ReuseBuffers);
