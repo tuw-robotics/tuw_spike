@@ -1,0 +1,44 @@
+tuw_libcamera:
+  camera: {
+    type: string,
+    description: "Camera ID to use, or empty to use any camera.",
+    default_value: "",
+    read_only: true
+  }
+  stream_roles: {
+    type: string_array,
+    default_value: [ "video" ],
+    read_only: true,
+    validation: {
+      size_gt<>: [0],
+      unique<>: null,
+      subset_of<>: [["raw", "viewfinder", "still", "video"]]
+    }
+  }
+  streams:
+    __map_stream_roles:
+      width: {
+        type: int,
+        default_value: 0,
+        read_only: true
+      }
+      height: {
+        type: int,
+        default_value: 0,
+        read_only: true
+      }
+      format: {
+        type: string,
+        default_value: "",
+        read_only: true
+      }
+      sub_topic: {
+        type: string,
+        default_value: "",
+        read_only: true
+      }
+      target_format: {
+        type: string,
+        default_value: "",
+        read_only: true
+      }

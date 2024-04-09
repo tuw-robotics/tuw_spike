@@ -1,21 +1,22 @@
-import os
-
-from launch_ros.actions import Node, ComposableNodeContainer
+from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, OpaqueFunction, IncludeLaunchDescription, SetLaunchConfiguration
-from launch.conditions import IfCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch.launch_context import LaunchContext
 
 
 def generate_launch_description():
-    libcamera_comp = ComposableNode(
+    capture_comp = ComposableNode(
         package='tuw_libcamera',
-        plugin='tuw_libcamera::LibcameraNode',
-        name='camera_capture',
+        plugin='tuw_libcamera::CaptureNode',
         extra_arguments=[{'use_intra_process_comms': True}],
+        parameters=[{
+            "stream_roles": ["video"],
+            "streams.video": {
+                "format": "YUYV",
+                "target_format": "yuv422_yuy2",
+                "width": 1280,
+                "height": 720
+            }
+        }]
     )
 
     container = ComposableNodeContainer(
@@ -23,7 +24,9 @@ def generate_launch_description():
         namespace='',
         package='rclcpp_components',
         executable='component_container',
-        composable_node_descriptions=[libcamera_comp]
+        #ros_arguments=["--log-level", "debug"],
+        #prefix='gdbserver :2222',
+        composable_node_descriptions=[capture_comp]
     )
 
     return LaunchDescription([

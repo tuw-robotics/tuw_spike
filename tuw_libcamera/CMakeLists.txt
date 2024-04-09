@@ -8,33 +8,49 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(generate_parameter_library REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LibCamera REQUIRED IMPORTED_TARGET libcamera)
 
-add_library(tuw_libcamera_component SHARED
-  src/tuw_libcamera_node.cpp)
+add_library(tuw_libcamera_capture_node SHARED
+  src/capture_node.cpp
+  src/convert.cpp
+  src/stream_handler.cpp
+  src/buffer_context.cpp
+  src/camera_controls_handler.cpp)
 
-target_include_directories(tuw_libcamera_component PUBLIC
+target_include_directories(tuw_libcamera_capture_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(tuw_libcamera_component PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(tuw_libcamera_capture_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-ament_target_dependencies(tuw_libcamera_component
-  rclcpp_components)
-target_link_libraries(tuw_libcamera_component
-  PkgConfig::LibCamera)
+generate_parameter_library(tuw_libcamera_capture_node_parameters
+  src/capture_node_parameters.yaml)
 
-rclcpp_components_register_node(
-  tuw_libcamera_component
-  PLUGIN "tuw_libcamera::LibcameraNode"
-  EXECUTABLE tuw_libcamera
-)
+ament_target_dependencies(tuw_libcamera_capture_node
+  rclcpp_components
+  sensor_msgs
+  OpenCV
+  image_transport)
 
-ament_export_targets(export_tuw_libcamera_component)
+target_link_libraries(tuw_libcamera_capture_node
+  PkgConfig::LibCamera
+  tuw_libcamera_capture_node_parameters)
+
+rclcpp_components_register_node(tuw_libcamera_capture_node
+  PLUGIN "tuw_libcamera::CaptureNode"
+  EXECUTABLE tuw_libcamera_capture)
+
+ament_export_targets(export_tuw_libcamera)
 install(
-  TARGETS tuw_libcamera_component
-  EXPORT export_tuw_libcamera_component
+  TARGETS
+  tuw_libcamera_capture_node
+  tuw_libcamera_capture_node_parameters
+  EXPORT export_tuw_libcamera
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
