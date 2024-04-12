@@ -21,6 +21,13 @@ def generate_launch_description():
         }]
     )
 
+    transport_comp = ComposableNode(
+        package='tuw_libcamera',
+        plugin='tuw_libcamera::TransportNode',
+        extra_arguments=[{'use_intra_process_comms': True}],
+        namespace="camera"
+    )
+
     container = ComposableNodeContainer(
         name='camera_processing_container',
         namespace='',
@@ -28,7 +35,7 @@ def generate_launch_description():
         executable='component_container',
         #ros_arguments=["--log-level", "debug"],
         #prefix='gdbserver :2222',
-        composable_node_descriptions=[capture_comp]
+        composable_node_descriptions=[capture_comp, transport_comp]
     )
 
     return LaunchDescription([

@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(pluginlib REQUIRED)
 find_package(camera_info_manager REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(generate_parameter_library REQUIRED)
@@ -30,12 +31,16 @@ ament_target_dependencies(tuw_libcamera_common INTERFACE
 
 # Include node source
 add_subdirectory(src/capture)
-
+add_subdirectory(src/transport)
 
 # Register nodes
 rclcpp_components_register_node(tuw_libcamera_capture_node
   PLUGIN "tuw_libcamera::CaptureNode"
   EXECUTABLE tuw_libcamera_capture)
+
+rclcpp_components_register_node(tuw_libcamera_transport_node
+  PLUGIN "tuw_libcamera::TransportNode"
+  EXECUTABLE tuw_libcamera_transport)
 
 # Export libraries
 ament_export_targets(export_tuw_libcamera)
@@ -44,6 +49,7 @@ install(
   tuw_libcamera_common
   tuw_libcamera_capture_node
   tuw_libcamera_capture_node_parameters
+  tuw_libcamera_transport_node
   EXPORT export_tuw_libcamera
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
