@@ -142,7 +142,10 @@ void CameraControlsHandler::handle_parameter(
 
     const std::string PARAM_PREFIX = "controls.";
     std::string param_id = PARAM_PREFIX + ctrl_id->name();
-    auto def_value = ctrl_info.def().get<typename converter::data_type>();
+    typename converter::data_type def_value{};
+    if (!ctrl_info.def().isNone()) {
+        def_value = ctrl_info.def().get<typename converter::data_type>();
+    }
     auto def_param = converter::to_parameter(def_value);
     auto param = node->declare_parameter<typename converter::param_type>(
         param_id, def_param);
