@@ -67,7 +67,7 @@ class CaptureNode : public rclcpp::Node {
             }
             cam_info_publisher =
                 create_publisher<camera_info_manager::CameraInfo>(
-                    "camera_info", rclcpp::ParametersQoS());
+                    "camera_info", rclcpp::SensorDataQoS());
         }
 
         // Connect to signal, start capture and queue requests
