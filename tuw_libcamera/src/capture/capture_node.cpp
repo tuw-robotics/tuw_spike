@@ -13,6 +13,7 @@
 #include "tuw_libcamera/buffer_context.hpp"
 #include "tuw_libcamera/camera_controls_handler.hpp"
 #include "tuw_libcamera/convert.hpp"
+#include "tuw_libcamera/request_handler.hpp"
 #include "tuw_libcamera/stream_handler.hpp"
 
 #include "tuw_libcamera_capture_node_parameters.hpp"
@@ -54,36 +55,45 @@ class CaptureNode : public rclcpp::Node {
         cam_manager = init_camera_manager();
         acquire_camera(params.camera);
         configure_camera(params);
-        create_stream_handlers(params);
         size_t num_requests = allocate_buffers();
-        create_requests(num_requests);
+        request_handler =
+            std::make_shared<RequestHandler>(this, camera, num_requests);
+        create_stream_handlers(params);
+
+        get_node_waitables_interface()->add_waitable(
+            request_handler,
+            get_node_base_interface()->get_default_callback_group());
 
         if (!params.camera_info_name.empty()) {
-            cam_info_manager =
-                std::make_unique<camera_info_manager::CameraInfoManager>(
+            auto cam_info_manager =
+                std::make_shared<camera_info_manager::CameraInfoManager>(
                     this, params.camera_info_name, params.camera_info_url);
             if (cam_info_manager->isCalibrated()) {
                 RCLCPP_INFO(get_logger(), "Camera calibration data loaded.");
             }
-            cam_info_publisher =
+            auto cam_info_publisher =
                 create_publisher<camera_info_manager::CameraInfo>(
                     "camera_info", rclcpp::SensorDataQoS());
+
+            request_handler->set_frame_publish_callback(
+                [cam_info_manager, cam_info_publisher](rclcpp::Time stamp) {
+                    auto info = cam_info_manager->getCameraInfo();
+                    info.header.stamp = stamp;
+                    cam_info_publisher->publish(info);
+                });
         }
 
         // Connect to signal, start capture and queue requests
-        camera->requestCompleted.connect(this, &CaptureNode::request_completed);
+        camera->requestCompleted.connect(request_handler.get(),
+                                         &RequestHandler::handle);
         camera->start();
-        for (const auto &request : requests) {
-            camera->queueRequest(request.get());
-        }
+        request_handler->start();
 
         RCLCPP_INFO(get_logger(), "Started.");
     }
 
     ~CaptureNode() {
         RCLCPP_INFO(get_logger(), "stopping.");
-        // unmap buffers before deallocation
-        buffer_ctx.clear();
         if (camera) {
             camera->stop();
             camera->release();
@@ -95,25 +105,8 @@ class CaptureNode : public rclcpp::Node {
     std::shared_ptr<libcamera::CameraManager> cam_manager;
     std::shared_ptr<libcamera::Camera> camera;
     std::unique_ptr<libcamera::CameraConfiguration> config;
-    std::unique_ptr<CameraControlsHandler> controls_handler;
     std::unique_ptr<libcamera::FrameBufferAllocator> allocator;
-    std::vector<std::unique_ptr<libcamera::Request>> requests;
-    std::vector<BufferContext> buffer_ctx;
-    std::vector<std::unique_ptr<StreamHandler>> stream_handlers;
-    std::vector<uint32_t> request_control_seq;
-
-    std::unique_ptr<camera_info_manager::CameraInfoManager> cam_info_manager;
-    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr
-        cam_info_publisher;
-
-    void add_buffer(size_t stream_idx, libcamera::FrameBuffer *buffer) {
-        buffer->setCookie(buffer_ctx.size());
-        buffer_ctx.emplace_back(buffer, stream_idx);
-    }
-
-    BufferContext &buffer_context(libcamera::FrameBuffer *buffer) {
-        return buffer_ctx.at(buffer->cookie());
-    }
+    std::shared_ptr<RequestHandler> request_handler;
 
     void acquire_camera(const std::string &camera_id) {
         if (cam_manager->cameras().empty()) {
@@ -199,9 +192,6 @@ class CaptureNode : public rclcpp::Node {
         if (camera->configure(config.get()) < 0) {
             throw std::runtime_error("Failed to configure camera.");
         }
-
-        controls_handler =
-            std::make_unique<CameraControlsHandler>(this, camera->controls());
     }
 
     void create_stream_handlers(const Params &params) {
@@ -211,8 +201,10 @@ class CaptureNode : public rclcpp::Node {
             const auto &stream_params =
                 params.streams.stream_roles_map.at(stream_role);
 
-            stream_handlers.push_back(
-                create_stream_handler(this, stream_cfg, stream_params));
+            request_handler->add_stream(
+                stream_cfg.stream(),
+                create_stream_handler(this, stream_cfg, stream_params),
+                *allocator);
         }
     }
 
@@ -240,62 +232,6 @@ class CaptureNode : public rclcpp::Node {
         if (num_requests == 0 || num_requests == SIZE_MAX)
             throw std::runtime_error("No buffers allocated.");
         return num_requests;
-    }
-
-    void create_requests(size_t num_requests) {
-        for (size_t req_idx = 0; req_idx < num_requests; req_idx++) {
-            // Create request and link buffers
-            auto request = camera->createRequest(request_control_seq.size());
-            request_control_seq.push_back(0);
-            if (!request) {
-                throw std::runtime_error("Failed to create request");
-            }
-
-            for (size_t stream_idx = 0; stream_idx < config->size();
-                 stream_idx++) {
-                const auto &stream_cfg = config->at(stream_idx);
-                const auto &buffer =
-                    allocator->buffers(stream_cfg.stream()).at(req_idx);
-
-                // Add buffer to context
-                add_buffer(stream_idx, buffer.get());
-
-                if (request->addBuffer(stream_cfg.stream(), buffer.get()) < 0) {
-                    throw std::runtime_error("Failed to add buffer to request");
-                }
-            }
-
-            // Initialize request controls
-            controls_handler->update_request(
-                request->controls(), &request_control_seq.at(request->cookie()),
-                true);
-
-            // Store request pointer reference
-            requests.push_back(std::move(request));
-        }
-    }
-
-    void request_completed(libcamera::Request *request) {
-        if (request->status() == libcamera::Request::RequestCancelled)
-            return;
-
-        std_msgs::msg::Header header;
-        header.stamp = now();
-        for (auto [stream, buffer] : request->buffers()) {
-            auto &ctx = buffer_context(buffer);
-            stream_handlers.at(ctx.stream_idx())->publish_buffer(ctx, header);
-        }
-
-        if (cam_info_manager) {
-            auto info = cam_info_manager->getCameraInfo();
-            info.header = header;
-            cam_info_publisher->publish(info);
-        }
-
-        request->reuse(libcamera::Request::ReuseBuffers);
-        controls_handler->update_request(
-            request->controls(), &request_control_seq.at(request->cookie()));
-        camera->queueRequest(request);
     }
 };
 

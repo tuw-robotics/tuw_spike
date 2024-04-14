@@ -3,6 +3,7 @@ add_library(tuw_libcamera_capture_node SHARED
   convert.cpp
   stream_handler.cpp
   buffer_context.cpp
+  request_handler.cpp
   camera_controls_handler.cpp)
 
 generate_parameter_library(tuw_libcamera_capture_node_parameters
