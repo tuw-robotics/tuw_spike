@@ -160,7 +160,7 @@ class CaptureNode : public rclcpp::Node {
             if (stream_params.width)
                 stream_cfg.size.width = stream_params.width;
             if (stream_params.height)
-                stream_cfg.size.height = stream_params.width;
+                stream_cfg.size.height = stream_params.height;
             if (!stream_params.format.empty())
                 stream_cfg.pixelFormat =
                     libcamera::PixelFormat::fromString(stream_params.format);
