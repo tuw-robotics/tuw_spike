@@ -19,7 +19,7 @@ class RequestHandler : public rclcpp::Waitable {
     using FramePublishedCallback = std::function<void(rclcpp::Time)>;
     RequestHandler(rclcpp::Node *node,
                    std::shared_ptr<libcamera::Camera> camera,
-                   size_t num_requests);
+                   size_t num_requests, std::string frame_id);
 
     void add_to_wait_set(rcl_wait_set_t *wait_set) override;
     bool is_ready(rcl_wait_set_t *wait_set) override;
@@ -48,14 +48,11 @@ class RequestHandler : public rclcpp::Waitable {
         rclcpp::Time stamp{};
     };
 
-    BufferContext &buffer_context(libcamera::FrameBuffer *buffer) {
-        return buffer_ctx.at(buffer->cookie());
-    }
-
     rclcpp::GuardCondition::SharedPtr gc;
     rclcpp::Logger logger;
     rclcpp::Clock::ConstSharedPtr clock;
     std::shared_ptr<libcamera::Camera> camera;
+    std::string frame_id;
 
     std::vector<std::unique_ptr<libcamera::Request>> requests;
     std::vector<BufferContext> buffer_ctx;

@@ -17,6 +17,12 @@ tuw_libcamera:
     default_value: "",
     read_only: true
   }
+  frame_id: {
+    type: string,
+    description: "Frame ID to publish in the message header",
+    default_value: "",
+    read_only: true
+  }
   stream_roles: {
     type: string_array,
     default_value: [ "video" ],

@@ -14,8 +14,8 @@ RequestHandler::RequestContext::RequestContext(
 
 RequestHandler::RequestHandler(rclcpp::Node *node,
                                std::shared_ptr<libcamera::Camera> camera,
-                               size_t num_requests)
-    : logger(node->get_logger()), clock(node->get_clock()), camera(camera) {
+                               size_t num_requests, std::string frame_id)
+    : logger(node->get_logger()), clock(node->get_clock()), camera(camera), frame_id(frame_id) {
     static_assert(std::numeric_limits<size_t>::max() <=
                   std::numeric_limits<uint64_t>::max());
 
@@ -96,8 +96,9 @@ void RequestHandler::execute(std::shared_ptr<void> &data) {
 
             std_msgs::msg::Header header;
             header.stamp = ctx.stamp;
+            header.frame_id = frame_id;
             for (auto [stream, buffer] : ctx.request->buffers()) {
-                auto &ctx = buffer_context(buffer);
+                auto &ctx = buffer_ctx.at(buffer->cookie());
                 stream_handlers.at(ctx.stream_idx())
                     ->publish_buffer(ctx, header);
             }

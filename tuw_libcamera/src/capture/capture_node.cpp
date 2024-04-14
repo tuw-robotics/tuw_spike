@@ -57,7 +57,7 @@ class CaptureNode : public rclcpp::Node {
         configure_camera(params);
         size_t num_requests = allocate_buffers();
         request_handler =
-            std::make_shared<RequestHandler>(this, camera, num_requests);
+            std::make_shared<RequestHandler>(this, camera, num_requests, params.frame_id);
         create_stream_handlers(params);
 
         get_node_waitables_interface()->add_waitable(
@@ -76,9 +76,10 @@ class CaptureNode : public rclcpp::Node {
                     "camera_info", rclcpp::SensorDataQoS());
 
             request_handler->set_frame_publish_callback(
-                [cam_info_manager, cam_info_publisher](rclcpp::Time stamp) {
+                [cam_info_manager, cam_info_publisher, params](rclcpp::Time stamp) {
                     auto info = cam_info_manager->getCameraInfo();
                     info.header.stamp = stamp;
+                    info.header.frame_id = params.frame_id;
                     cam_info_publisher->publish(info);
                 });
         }
