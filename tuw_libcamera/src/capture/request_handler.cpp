@@ -86,13 +86,14 @@ void RequestHandler::execute(std::shared_ptr<void> &data) {
     (void)data;
     for (auto &ctx : request_ctx) {
         if (ctx.waiting) {
-            ctx.waiting = false;
             waiting_requests--;
 
             RCLCPP_DEBUG_STREAM(logger, "Handle completed request "
                                             << ctx.request->cookie()
                                             << " on thread: "
-                                            << std::this_thread::get_id());
+                                            << std::this_thread::get_id()
+                                            << " with stamp: "
+                                            << (long)(ctx.stamp.seconds()*1e6));
 
             std_msgs::msg::Header header;
             header.stamp = ctx.stamp;
@@ -110,6 +111,7 @@ void RequestHandler::execute(std::shared_ptr<void> &data) {
             ctx.request->reuse(libcamera::Request::ReuseBuffers);
             controls_handler->update_request(ctx.request->controls(),
                                              &ctx.control_seq, false);
+            ctx.waiting = false;
             camera->queueRequest(ctx.request.get());
         }
     }

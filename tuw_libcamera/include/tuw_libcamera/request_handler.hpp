@@ -37,10 +37,6 @@ class RequestHandler : public rclcpp::Waitable {
   private:
     struct RequestContext {
         RequestContext(size_t idx, std::shared_ptr<libcamera::Camera> camera);
-        void add_buffer(libcamera::Stream *stream,
-                        libcamera::FrameBuffer *buffer);
-        void update_controls(CameraControlsHandler &controls_handler,
-                             bool force);
 
         std::unique_ptr<libcamera::Request> request;
         uint32_t control_seq{};
@@ -50,7 +46,7 @@ class RequestHandler : public rclcpp::Waitable {
 
     rclcpp::GuardCondition::SharedPtr gc;
     rclcpp::Logger logger;
-    rclcpp::Clock::ConstSharedPtr clock;
+    rclcpp::Clock::SharedPtr clock;
     std::shared_ptr<libcamera::Camera> camera;
     std::string frame_id;
 
