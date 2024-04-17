@@ -1,0 +1,10 @@
+tuw_spike_camera:
+  ray_frame: {
+    type: string,
+    description: "Frame in which the rays are cast (XY - plane)",
+    default_value: "",
+    read_only: true,
+    validation: {
+      size_gt<>: [0]
+    }
+  }

@@ -1,0 +1,9 @@
+add_library(tuw_spike_camera_ray_localizer_node SHARED
+  ray_localizer_node.cpp)
+
+generate_parameter_library(tuw_spike_camera_ray_localizer_parameters
+  ray_localizer_parameters.yaml)
+
+target_link_libraries(tuw_spike_camera_ray_localizer_node
+  tuw_spike_camera_common
+  tuw_spike_camera_ray_localizer_parameters)

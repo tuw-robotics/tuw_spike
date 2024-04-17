@@ -7,6 +7,46 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(generate_parameter_library REQUIRED)
+
+# Common flags and dependencies
+add_library(tuw_spike_camera_common INTERFACE)
+target_include_directories(tuw_spike_camera_common INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(tuw_spike_camera_common INTERFACE c_std_99 cxx_std_17)  # Require C99 and C++17
+
+ament_target_dependencies(tuw_spike_camera_common INTERFACE
+  rclcpp_components
+  sensor_msgs
+  image_transport
+  OpenCV
+  cv_bridge)
+
+# Include node source
+add_subdirectory(src)
+
+# Register nodes
+rclcpp_components_register_node(tuw_spike_camera_ray_localizer_node
+  PLUGIN "tuw_spike_camera::RayLocalizerNode"
+  EXECUTABLE tuw_spike_camera_ray_localizer)
+
+# Export libraries
+ament_export_targets(export_tuw_spike_camera)
+install(
+  TARGETS
+  tuw_spike_camera_common
+  tuw_spike_camera_ray_localizer_node
+  tuw_spike_camera_ray_localizer_parameters
+  EXPORT export_tuw_spike_camera
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
 
 install(
   DIRECTORY launch calibration
