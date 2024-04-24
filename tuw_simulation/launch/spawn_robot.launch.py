@@ -40,7 +40,6 @@ def generate_launch_description():
     spawner = Node(
         package="tuw_simulation",
         executable="spawn_robot.py",
-        #namespace=[LaunchConfiguration('model_name')],
         parameters=[{
                 "X": LaunchConfiguration('X'),
                 "Y": LaunchConfiguration('Y'),
@@ -53,7 +52,6 @@ def generate_launch_description():
                                   executable='robot_state_publisher',
                                   output='both',
                                   parameters=[params],
-                                  arguments="urdf",
                                   namespace=[LaunchConfiguration('model_name')],)  
     
     tuw_simulation = FindPackageShare("tuw_simulation")
@@ -62,8 +60,8 @@ def generate_launch_description():
     bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
-        parameters=[{"config_file": bridge_config}, {'use_sim_time': True}],
-        namespace=[LaunchConfiguration("model_name")]
+        parameters=[{"config_file": bridge_config}, {'use_sim_time': True}, {'expand_gz_topic_names': True}],
+        namespace=[LaunchConfiguration("model_name")],
     )
             
     def error_handling(event):

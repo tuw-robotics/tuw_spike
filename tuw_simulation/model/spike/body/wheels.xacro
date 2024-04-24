@@ -2,15 +2,13 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
     <!-- Wheel Macro -->
-    <xacro:macro name="wheel" params="prefix x_reflect y_reflect">
+    <xacro:macro name="wheel" params="prefix y_reflect">
         <!-- Wheel Joint -->
         <joint name="${prefix}_wheel_joint" type="continuous">
             <parent link="base_link" />
             <child link="${prefix}_wheel" />
-            <origin xyz="${x_reflect*wheel_offset} ${y_reflect*(base_width/2+wheel_ygap)} ${-wheel_offset}" rpy="0 0 0" />
+            <origin xyz="${wheel_x} ${y_reflect*wheel_y} ${wheel_z}" rpy="0 0 0" />
             <axis xyz="0 1 0" />
-            <dynamics damping="0.2" />
-            <limit effort="100" velocity="3.0" />
         </joint>
         <!-- Wheel Link -->
         <link name="${prefix}_wheel">
@@ -38,32 +36,60 @@
                     izz="${wheel_mass / 2.0 * wheel_radius*wheel_radius}"
                     ixy="0.0" ixz="0.0" iyz="0.0" />
             </inertial>
+
+            <gazebo reference="${prefix}_wheel">
+                <mu1 value="10.0"/>
+                <mu2 value="10.0"/>
+                <kp value="10000000.0"/>
+                <kd value="1.0"/>
+                <fdir1 value="1 1 0"/>
+            </gazebo>
         </link>
     </xacro:macro>
 
-    <xacro:wheel prefix="left" x_reflect="-1" y_reflect="1" />
-    <xacro:wheel prefix="right" x_reflect="-1" y_reflect="-1" />
+    <xacro:wheel prefix="left" y_reflect="1" />
+    <xacro:wheel prefix="right" y_reflect="-1" />
+
+    <joint name="caster_joint_gz" type="continuous">
+        <parent link="base_link"/>
+        <child link="front_caster_gz"/>
+        <origin xyz="${caster_x} ${caster_y} ${caster_z}" rpy="0 0 0"/>
+    </joint>
 
     <!-- Caster Wheel -->
-    <link name="front_caster">
+    <link name="front_caster_gz">
         <visual>
             <geometry>
-                <sphere radius="${(wheel_radius+wheel_offset-(base_height/2))}"/>
+                <sphere radius="${caster_radius}"/>
             </geometry>
             <material name="black"/>
         </visual>
 
         <collision>
             <geometry>
-                <sphere radius="${(wheel_radius+wheel_offset-(base_height/2))}"/>
+                <sphere radius="${caster_radius}"/>
             </geometry>
         </collision>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="${caster_mass}" />
+            <inertia
+                ixx="${2/5 * caster_mass * caster_radius*caster_radius}"
+                iyy="${2/5 * caster_mass * caster_radius*caster_radius}"
+                izz="${2/5 * caster_mass * caster_radius*caster_radius}"
+                ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
+
+        <gazebo reference="front_caster_gz">
+            <mu1 value="0.0"/>
+            <mu2 value="0.0"/>
+            <kp value="10000000.0"/>
+            <kd value="1.0"/>
+            <fdir1 value="1 0 0"/>
+        </gazebo>
     </link>
 
-    <joint name="caster_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="front_caster"/>
-        <origin xyz="${caster_xoff} 0.0 ${-(base_height/2)}" rpy="0 0 0"/>
-    </joint>
+
+
 
 </robot>
