@@ -34,13 +34,15 @@ class RayLocalizerNode : public rclcpp::Node {
 
         tf_buffer = std::make_shared<tf2_ros::Buffer>(this->get_clock());
         tf_listener = std::make_shared<tf2_ros::TransformListener>(
-            *tf_buffer, this, false, tf2_ros::DynamicListenerQoS(),
+            *tf_buffer, this, true, tf2_ros::DynamicListenerQoS(),
             tf2_ros::StaticListenerQoS(), tf_sub_opts, tf_static_sub_opts);
 
+        debug_pub = image_transport::create_publisher(
+            this, "~/debug", rmw_qos_profile_sensor_data);
         ray_localizer = std::make_shared<RayLocalizer>(
-            get_logger(), tf_buffer, std::move(param_listener));
+            get_logger(), tf_buffer, std::move(param_listener), debug_pub);
         camera_sub = image_transport::create_camera_subscription(
-            this, "image",
+            this, "image_rect",
             std::bind_front(&RayLocalizer::process_frame, ray_localizer), "raw",
             rmw_qos_profile_sensor_data);
     }
@@ -48,6 +50,7 @@ class RayLocalizerNode : public rclcpp::Node {
   private:
     std::shared_ptr<tf2_ros::Buffer> tf_buffer;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener;
+    image_transport::Publisher debug_pub;
     std::shared_ptr<RayLocalizer> ray_localizer;
     image_transport::CameraSubscriber camera_sub;
 };

@@ -7,6 +7,7 @@
 #include <opencv2/core/matx.hpp>
 #include <rclcpp/logger.hpp>
 #include <tf2_ros/buffer.h>
+#include <image_transport/publisher.hpp>
 
 #include "tuw_spike_camera_ray_localizer_parameters.hpp"
 
@@ -16,7 +17,8 @@ class RayLocalizer {
   public:
     explicit RayLocalizer(const rclcpp::Logger &logger,
                           std::shared_ptr<tf2_ros::Buffer> tfBuffer,
-                          std::unique_ptr<ParamListener> paramListener);
+                          std::unique_ptr<ParamListener> paramListener,
+                          image_transport::Publisher debug_pub);
     void
     process_frame(const sensor_msgs::msg::Image::ConstSharedPtr &image,
                   const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info);
@@ -26,6 +28,7 @@ class RayLocalizer {
     std::shared_ptr<tf2_ros::Buffer> tf_buffer;
     std::unique_ptr<ParamListener> param_listener;
     Params params;
+    image_transport::Publisher debug_pub;
 
     cv::Matx34d get_camera_extrinsic(const rclcpp::Time &time,
                                      const std::string &optical_frame);

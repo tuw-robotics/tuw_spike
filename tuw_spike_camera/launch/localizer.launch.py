@@ -1,8 +1,9 @@
-from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, Command, FindExecutable, PathJoinSubstitution
 from launch.conditions import IfCondition, UnlessCondition
 
 def generate_launch_description():
@@ -49,7 +50,7 @@ def generate_launch_description():
         extra_arguments=[{'use_intra_process_comms': True}],
         namespace="camera",
         parameters=[{
-            'ray_frame': 'ray'
+            'ray_frame': 'base_footprint'
         }]
     )
 
@@ -59,6 +60,31 @@ def generate_launch_description():
         output='both',
         condition=replay
     )
+
+    # Get URDF via xacro
+    robot_description_content = Command(
+        [
+            PathJoinSubstitution([FindExecutable(name="xacro")]),
+            " ",
+            PathJoinSubstitution(
+                [
+                    FindPackageShare("tuw_simulation"),
+                    "model",
+                    "spike",
+                    "main.xacro",
+                ]
+            ),
+            " namespace:=",
+            LaunchConfiguration('model_name')
+        ]
+    )
+
+    params = {'robot_description': robot_description_content}
+    robot_state_publisher = Node(package='robot_state_publisher',
+                                  executable='robot_state_publisher',
+                                  output='both',
+                                  parameters=[params],
+                                  namespace=[LaunchConfiguration('model_name')],)  
 
     container = ComposableNodeContainer(
         name='camera_processing_container',
@@ -77,6 +103,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument("replay", default_value="False"),
+        DeclareLaunchArgument('model_name',  default_value="robot0"),
         container,
+        robot_state_publisher,
         rosbag
     ])
