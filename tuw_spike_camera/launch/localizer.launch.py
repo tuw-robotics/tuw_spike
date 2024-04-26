@@ -3,11 +3,14 @@ from launch_ros.descriptions import ComposableNode
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch.conditions import IfCondition
-
+from launch.conditions import IfCondition, UnlessCondition
 
 def generate_launch_description():
+    replay = IfCondition(LaunchConfiguration("replay"))
+    not_replay = UnlessCondition(LaunchConfiguration("replay"))
+
     capture_comp = ComposableNode(
+        condition=not_replay,
         package='tuw_libcamera',
         plugin='tuw_libcamera::CaptureNode',
         extra_arguments=[{'use_intra_process_comms': True}],
@@ -40,6 +43,23 @@ def generate_launch_description():
         namespace="camera"
     )
 
+    localizer_comp = ComposableNode(
+        package='tuw_spike_camera',
+        plugin='tuw_spike_camera::RayLocalizerNode',
+        extra_arguments=[{'use_intra_process_comms': True}],
+        namespace="camera",
+        parameters=[{
+            'ray_frame': 'ray'
+        }]
+    )
+
+    rosbag = ExecuteProcess(
+        cmd=['ros2', 'bag', 'play', '--loop', 'bags/camera'],
+        name='rosbag',
+        output='both',
+        condition=replay
+    )
+
     container = ComposableNodeContainer(
         name='camera_processing_container',
         namespace='',
@@ -50,19 +70,13 @@ def generate_launch_description():
         composable_node_descriptions=[
             capture_comp,
             undistort_comp,
-            transport_comp
+            #transport_comp,
+            localizer_comp
         ]
     )
 
-    rosbag = ExecuteProcess(
-        cmd=['ros2', 'bag', 'record', '/camera/image', '/camera/camera_info'],
-        name='rosbag',
-        output='both',
-        condition=IfCondition(LaunchConfiguration('record'))
-    )
-
     return LaunchDescription([
-        DeclareLaunchArgument("record", default_value="False"),
+        DeclareLaunchArgument("replay", default_value="False"),
         container,
         rosbag
     ])
