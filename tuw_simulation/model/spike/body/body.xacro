@@ -14,6 +14,7 @@
     <xacro:include filename="wheels.xacro"/>
 
     <xacro:include filename="camera.xacro"/>
+    <xacro:include filename="ray_frame.xacro"/>
 
 
 </robot>

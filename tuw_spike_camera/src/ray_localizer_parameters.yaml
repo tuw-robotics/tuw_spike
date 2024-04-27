@@ -1,10 +1,36 @@
 tuw_spike_camera:
   ray_frame: {
     type: string,
-    description: "Frame in which the rays are cast (XY - plane)",
+    description: "Frame in which the rays are cast (XY-plane)",
     default_value: "",
     read_only: true,
     validation: {
       size_gt<>: [0]
+    }
+  }
+  debug_img_size: {
+    type: int,
+    description: "Image size for debug image",
+    default_value: 400,
+    read_only: true,
+    validation: {
+      gt<>: [0]
+    }
+  }
+  debug_real_size: {
+    type: double,
+    description: "Real world size of the debug image viewport",
+    default_value: 0.2,
+    read_only: true,
+    validation: {
+      gt<>: [0]
+    }
+  }
+  num_rays: {
+    type: int,
+    description: "Number of rays to create",
+    default_value: 20,
+    validation: {
+      gt<>: [0]
     }
   }

@@ -50,8 +50,6 @@
     <xacro:property name="camera_y" value="0.0"/>
     <xacro:property name="camera_z" value="0.06464"/>
     <xacro:property name="camera_angle" value="24.74"/>
-
-
-
+    <xacro:property name="ray_origin_offset" value="0.15"/>
 
 </robot>

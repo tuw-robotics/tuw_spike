@@ -55,13 +55,43 @@ void RayLocalizer::process_frame(
     // clang-format on
     auto inv_homography = homography.inv();
 
+    for (int64_t i = 0; i < params.num_rays; i++) {
+        double angle = -M_PI_2 + M_PI * i / (double)(params.num_rays - 1);
+        // Homogenous Line Representation:
+        // Vector (a, b, c): ax + by + c = 0
+        // Line Through origin: c = 0, direction = (b, −a)
+        // -> b = cos(phi), a = -sin(phi)
+        cv::Vec3d line{-sin(angle), cos(angle), 0};
+        // Homography H transforms points from ray plane -> camera_plane
+        // H^(-T) transforms lines from ray plane -> camera_plane
+        cv::Vec3d line_img = inv_homography.t() * line;
+
+        double transformed_angle = atan2(-line_img(0), line_img(1));
+        RCLCPP_INFO(logger, "Line angle: %.2f transformed: %.2f",
+                    180.0 / M_PI * angle, 180.0 / M_PI * transformed_angle);
+
+        const cv::Vec3d viewport_bot{0, -1, (double)cv_img->image.rows - 1};
+        const cv::Vec3d viewport_top{0, -1, 0};
+        auto pt_bot = line_img.cross(viewport_bot);
+        auto pt_top = line_img.cross(viewport_top);
+        if (abs(pt_bot(2)) <= 1e-6 || abs(pt_top(2)) <= 1e-6) {
+            RCLCPP_WARN(logger, "ray %ld (almost) parallel to viewport", i);
+            continue;
+        }
+        pt_bot /= pt_bot(2);
+        pt_top /= pt_top(2);
+
+        /*RCLCPP_INFO(logger, "pt_bot (%.2f, %.2f), pt_top: (%.2f, %.2f)",
+                    pt_bot(0), pt_bot(1), pt_top(0), pt_top(1));*/
+        cv::Point pt_a{(int)pt_bot(0), (int)pt_bot(1)};
+        cv::Point pt_b{(int)pt_top(0), (int)pt_top(1)};
+        cv::line(cv_img->image, pt_a, pt_b, cv::Scalar(0, 255, 0));
+    }
+
     // Create an affine transform to map the ray XY plane to the debug
     // image dimensions
-    constexpr int debug_img_size = 400; // Size of the debug image
-    constexpr double debug_real_size =
-        0.2; // Size of the debug image viewport in meters
-    constexpr double scale = debug_img_size / debug_real_size;
-    constexpr double offset = debug_img_size / 2;
+    double scale = params.debug_img_size / params.debug_real_size;
+    double offset = params.debug_img_size / 2;
 
     // clang-format off
     cv::Matx33d debug_affine{scale, 0,      0,
@@ -76,11 +106,11 @@ void RayLocalizer::process_frame(
 
     cv::warpPerspective(cv_img->image, debug_image.image,
                         debug_affine * inv_homography,
-                        cv::Size(debug_img_size, debug_img_size),
+                        cv::Size(params.debug_img_size, params.debug_img_size),
                         cv::InterpolationFlags::INTER_NEAREST,
                         cv::BorderTypes::BORDER_CONSTANT);
 
-    debug_pub.publish(debug_image.toImageMsg());
+    debug_pub.publish(cv_img->toImageMsg());
 }
 
 cv::Matx34d
