@@ -8,6 +8,8 @@
 // Need for tf2 conversion function to link
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+#include "tuw_spike_camera/geometry.hpp"
+
 using namespace std::chrono_literals;
 
 namespace tuw_spike_camera {
@@ -32,6 +34,9 @@ void RayLocalizer::process_frame(
         params = param_listener->get_params();
     }
 
+    int width = cv_img->image.cols;
+    int height = cv_img->image.rows;
+
     cv::Matx33d cam_intrinsic{info->k.data()};
     cv::Matx34d cam_extrinsic;
     try {
@@ -55,37 +60,35 @@ void RayLocalizer::process_frame(
     // clang-format on
     auto inv_homography = homography.inv();
 
+    ProjPoint2d start_pt =
+        inv_homography * ProjPoint2d(0.0, (double)(height - 1));
+    ProjPoint2d end_pt =
+        inv_homography * ProjPoint2d((double)(width - 1), (double)(height - 1));
+
+    double start_angle = atan2(start_pt.y(), start_pt.x());
+    double end_angle = atan2(end_pt.y(), end_pt.x());
+
+    ProjLine2d viewport_bot{0, -1, (double)cv_img->image.rows - 1};
+    ProjLine2d viewport_top{0, -1, 0};
+
     for (int64_t i = 0; i < params.num_rays; i++) {
-        double angle = -M_PI_2 + M_PI * i / (double)(params.num_rays - 1);
-        // Homogenous Line Representation:
-        // Vector (a, b, c): ax + by + c = 0
-        // Line Through origin: c = 0, direction = (b, −a)
-        // -> b = cos(phi), a = -sin(phi)
-        cv::Vec3d line{-sin(angle), cos(angle), 0};
-        // Homography H transforms points from ray plane -> camera_plane
-        // H^(-T) transforms lines from ray plane -> camera_plane
-        cv::Vec3d line_img = inv_homography.t() * line;
+        double angle = std::lerp(start_angle, end_angle,
+                                 i / (double)(params.num_rays - 1));
+        
+        ProjLine2d line({0, 0}, angle);
 
-        double transformed_angle = atan2(-line_img(0), line_img(1));
-        RCLCPP_INFO(logger, "Line angle: %.2f transformed: %.2f",
-                    180.0 / M_PI * angle, 180.0 / M_PI * transformed_angle);
-
-        const cv::Vec3d viewport_bot{0, -1, (double)cv_img->image.rows - 1};
-        const cv::Vec3d viewport_top{0, -1, 0};
-        auto pt_bot = line_img.cross(viewport_bot);
-        auto pt_top = line_img.cross(viewport_top);
-        if (abs(pt_bot(2)) <= 1e-6 || abs(pt_top(2)) <= 1e-6) {
+        // Homography H transforms points from ray plane -> image plane
+        // H^(-T) transforms lines from ray plane -> image plane
+        ProjLine2d line_img = inv_homography.t() * line;
+        ProjPoint2d pt_bot = line_img.intersect(viewport_bot);
+        ProjPoint2d pt_top = line_img.intersect(viewport_top);
+        if (pt_bot.at_infinity() || pt_bot.at_infinity()) {
             RCLCPP_WARN(logger, "ray %ld (almost) parallel to viewport", i);
             continue;
         }
-        pt_bot /= pt_bot(2);
-        pt_top /= pt_top(2);
 
-        /*RCLCPP_INFO(logger, "pt_bot (%.2f, %.2f), pt_top: (%.2f, %.2f)",
-                    pt_bot(0), pt_bot(1), pt_top(0), pt_top(1));*/
-        cv::Point pt_a{(int)pt_bot(0), (int)pt_bot(1)};
-        cv::Point pt_b{(int)pt_top(0), (int)pt_top(1)};
-        cv::line(cv_img->image, pt_a, pt_b, cv::Scalar(0, 255, 0));
+        cv::line(cv_img->image, static_cast<cv::Point>(pt_top),
+                 static_cast<cv::Point>(pt_bot), cv::Scalar(0, 255, 0));
     }
 
     // Create an affine transform to map the ray XY plane to the debug
@@ -111,6 +114,7 @@ void RayLocalizer::process_frame(
                         cv::BorderTypes::BORDER_CONSTANT);
 
     debug_pub.publish(cv_img->toImageMsg());
+    // debug_pub.publish(debug_image.toImageMsg());
 }
 
 cv::Matx34d
