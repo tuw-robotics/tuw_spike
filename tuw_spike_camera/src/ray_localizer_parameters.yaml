@@ -34,3 +34,11 @@ tuw_spike_camera:
       gt<>: [0]
     }
   }
+  edge_threshold: {
+    type: int,
+    description: "Threshold for detecting an edge",
+    default_value: 100,
+    validation: {
+      bounds<>: [0, 32767],
+    }
+  }

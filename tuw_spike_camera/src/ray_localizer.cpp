@@ -1,3 +1,4 @@
+#include <array>
 #include <utility>
 
 #include "rclcpp/logging.hpp"
@@ -14,6 +15,38 @@ using namespace std::chrono_literals;
 
 namespace tuw_spike_camera {
 
+template <typename T, size_t N1, size_t N2>
+static constexpr std::array<T, N1 + N2 - 1>
+convolve(const std::array<T, N1> &a, const std::array<T, N2> &b) {
+    static_assert(N1 > 0);
+    static_assert(N2 > 0);
+    static_assert((N2 % 2) == 1);
+
+    // 01234
+    // 012
+
+    //--01234--
+    // 012
+    // 0123456
+
+    std::array<T, N1 + N2 - 1> result{};
+    for (size_t i = 0; i < result.size(); i++) {
+        for (size_t j = 0; j < N2; j++) {
+            size_t k = i - j;
+            result[i] += ((k < N1) ? a[k] : 0) * b[j];
+        }
+    }
+    return result;
+}
+
+static constexpr auto KERNEL_DIFF = std::to_array<int16_t>({-1, 0, 1});
+
+static constexpr auto KERNEL_ONES =
+    std::to_array<int16_t>({0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0});
+
+static constexpr auto KERNEL = convolve(KERNEL_DIFF, KERNEL_ONES);
+// static constexpr auto KERNEL = KERNEL_DIFF;
+
 RayLocalizer::RayLocalizer(const rclcpp::Logger &logger,
                            std::shared_ptr<tf2_ros::Buffer> tfBuffer,
                            std::unique_ptr<ParamListener> paramListener,
@@ -28,7 +61,7 @@ void RayLocalizer::process_frame(
     const sensor_msgs::msg::Image::ConstSharedPtr &image,
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info) {
 
-    auto cv_img = cv_bridge::toCvShare(image, "bgr8");
+    auto cv_img = cv_bridge::toCvShare(image, "mono8");
 
     if (param_listener->is_old(params)) {
         params = param_listener->get_params();
@@ -77,7 +110,7 @@ void RayLocalizer::process_frame(
 
     ProjPoint2d ray_center_img = homography * ProjPoint2d(0, 0);
 
-    cv::Rect2d viewport{0, 0, (double)(width - 1), (double)(height - 1)};
+    cv::Rect2d viewport{0.5, 0.5, (double)(width - 1), (double)(height - 1)};
 
     for (int64_t i = 0; i < params.num_rays; i++) {
         double angle = std::lerp(start_angle, end_angle,
@@ -92,8 +125,53 @@ void RayLocalizer::process_frame(
 
         if (intersection) {
             auto [start, end] = *intersection;
-            cv::line(cv_img->image, static_cast<cv::Point>(start),
-                     static_cast<cv::Point>(end), cv::Scalar(0, 255, 0));
+            auto start_pt = static_cast<cv::Point>(start);
+            auto end_pt = static_cast<cv::Point>(end);
+            cv::LineIterator it{cv_img->image, start_pt, end_pt};
+
+            // Convolve kernel along line
+            std::array<std::pair<cv::Point, uint8_t>, KERNEL.size()> history{};
+            std::size_t history_base = 0;
+            // Fill history with values of ray start
+            history.fill({it.pos(), **it});
+            for (size_t i = 0; i <= (history.size() / 2 + it.count); i++) {
+                uint8_t &value = **it;
+
+                // Save historic values for kernel application
+                history[history_base] = {it.pos(), value};
+                history_base = (history_base + 1) % history.size();
+
+                // Mark ray for debugging
+                // value = 0;
+
+                // Advance iterator
+                if (i < (size_t)it.count) {
+                    ++it;
+                }
+
+                // Skip calculation for ray points out of bounds
+                if (i <= history.size() / 2) {
+                    continue;
+                }
+
+                // Apply kernel convolution
+                int16_t convolve_result = 0;
+                for (size_t j = 0; j < history.size(); j++) {
+                    size_t k = (history_base + j) % history.size();
+                    convolve_result +=
+                        history[k].second * KERNEL[KERNEL.size() - j - 1];
+                }
+
+                // Get position for which kernel was calculated
+                size_t center_idx =
+                    (history_base + history.size() / 2) % history.size();
+                cv::Point kernel_pos = history[center_idx].first;
+
+                // Mark edge for debugging
+                if (abs(convolve_result) > params.edge_threshold) {
+                    cv::circle(cv_img->image, kernel_pos, 5, 128, cv::FILLED);
+                }
+            }
         }
     }
 
@@ -111,7 +189,7 @@ void RayLocalizer::process_frame(
     std_msgs::msg::Header debug_header;
     debug_header.frame_id = params.ray_frame;
     debug_header.stamp = image->header.stamp;
-    cv_bridge::CvImage debug_image{debug_header, "bgr8"};
+    cv_bridge::CvImage debug_image{debug_header, "mono8"};
 
     cv::warpPerspective(cv_img->image, debug_image.image,
                         debug_affine * inv_homography,
