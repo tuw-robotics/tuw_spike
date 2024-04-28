@@ -58,6 +58,13 @@ void RayLocalizer::process_frame(
                            proj(1, 0), proj(1, 1), proj(1, 3),
                            proj(2, 0), proj(2, 1), proj(2, 3)};
     // clang-format on
+    if (cv::determinant(homography) < 0) {
+        // If the determinant is zero, make it positive by negating the matrix
+        // to ensure that directions are preserved. Since homographies are only
+        // defined up to a scalar multiple this represents the same
+        // transformation.
+        homography *= -1;
+    }
     auto inv_homography = homography.inv();
 
     ProjPoint2d start_pt =
@@ -68,27 +75,26 @@ void RayLocalizer::process_frame(
     double start_angle = atan2(start_pt.y(), start_pt.x());
     double end_angle = atan2(end_pt.y(), end_pt.x());
 
-    ProjLine2d viewport_bot{0, -1, (double)cv_img->image.rows - 1};
-    ProjLine2d viewport_top{0, -1, 0};
+    ProjPoint2d ray_center_img = homography * ProjPoint2d(0, 0);
+
+    cv::Rect2d viewport{0, 0, (double)(width - 1), (double)(height - 1)};
 
     for (int64_t i = 0; i < params.num_rays; i++) {
         double angle = std::lerp(start_angle, end_angle,
                                  i / (double)(params.num_rays - 1));
-        
-        ProjLine2d line({0, 0}, angle);
-
         // Homography H transforms points from ray plane -> image plane
         // H^(-T) transforms lines from ray plane -> image plane
-        ProjLine2d line_img = inv_homography.t() * line;
-        ProjPoint2d pt_bot = line_img.intersect(viewport_bot);
-        ProjPoint2d pt_top = line_img.intersect(viewport_top);
-        if (pt_bot.at_infinity() || pt_bot.at_infinity()) {
-            RCLCPP_WARN(logger, "ray %ld (almost) parallel to viewport", i);
-            continue;
-        }
+        ProjLine2d line_img = inv_homography.t() * ProjLine2d({0, 0}, angle);
 
-        cv::line(cv_img->image, static_cast<cv::Point>(pt_top),
-                 static_cast<cv::Point>(pt_bot), cv::Scalar(0, 255, 0));
+        auto intersection =
+            ray_intersect(static_cast<cv::Point2d>(ray_center_img),
+                          line_img.direction(), viewport);
+
+        if (intersection) {
+            auto [start, end] = *intersection;
+            cv::line(cv_img->image, static_cast<cv::Point>(start),
+                     static_cast<cv::Point>(end), cv::Scalar(0, 255, 0));
+        }
     }
 
     // Create an affine transform to map the ray XY plane to the debug
