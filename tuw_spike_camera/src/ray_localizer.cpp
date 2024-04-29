@@ -1,5 +1,6 @@
 #include <array>
 #include <utility>
+#include <cmath>
 
 #include "rclcpp/logging.hpp"
 #include "tuw_spike_camera/ray_localizer.hpp"
@@ -22,13 +23,6 @@ convolve(const std::array<T, N1> &a, const std::array<T, N2> &b) {
     static_assert(N2 > 0);
     static_assert((N2 % 2) == 1);
 
-    // 01234
-    // 012
-
-    //--01234--
-    // 012
-    // 0123456
-
     std::array<T, N1 + N2 - 1> result{};
     for (size_t i = 0; i < result.size(); i++) {
         for (size_t j = 0; j < N2; j++) {
@@ -39,13 +33,48 @@ convolve(const std::array<T, N1> &a, const std::array<T, N2> &b) {
     return result;
 }
 
+template<int Iterations = 100>
+static constexpr double constexpr_exp(double x) {
+    if (std::is_constant_evaluated()) {
+        double accum = 1;
+        double result = 0;
+        for (int i = 1; i <= Iterations; i++) {
+            result += accum;
+            accum *= x / i;
+        }
+        return result;
+    } else {
+        return exp(x);
+    }
+}
+
+template <typename T, int N>
+static constexpr std::array<T, N>
+gaussian(T area, double sigma) {
+    static_assert(N > 0);
+    static_assert((N % 2) == 1);
+
+    std::array<T, N> result{};
+    std::array<double, N> gaussian{};
+    double sum = 0.0;
+    for (int i = 0; i < N; i++) {
+        double x = (double) (i - N/2);
+        gaussian[i] = constexpr_exp(-0.5*x*x/(sigma*sigma));
+        sum += gaussian[i];
+    }
+    for (int i = 0; i < N; i++) {
+        result[i] = (T) (area * gaussian[i] / sum);
+    }
+    return result;
+}
+
 static constexpr auto KERNEL_DIFF = std::to_array<int16_t>({-1, 0, 1});
-
-static constexpr auto KERNEL_ONES =
+static constexpr auto KERNEL_DIRAC =
     std::to_array<int16_t>({0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0});
+static constexpr auto KERNEL_GAUSS = gaussian<int16_t, 5>(100, 0.8);
 
-static constexpr auto KERNEL = convolve(KERNEL_DIFF, KERNEL_ONES);
-// static constexpr auto KERNEL = KERNEL_DIFF;
+// static constexpr auto KERNEL = convolve(KERNEL_DIFF, KERNEL_GAUSS);
+static constexpr auto KERNEL = KERNEL_DIFF;
 
 RayLocalizer::RayLocalizer(const rclcpp::Logger &logger,
                            std::shared_ptr<tf2_ros::Buffer> tfBuffer,
@@ -127,50 +156,10 @@ void RayLocalizer::process_frame(
             auto [start, end] = *intersection;
             auto start_pt = static_cast<cv::Point>(start);
             auto end_pt = static_cast<cv::Point>(end);
-            cv::LineIterator it{cv_img->image, start_pt, end_pt};
 
-            // Convolve kernel along line
-            std::array<std::pair<cv::Point, uint8_t>, KERNEL.size()> history{};
-            std::size_t history_base = 0;
-            // Fill history with values of ray start
-            history.fill({it.pos(), **it});
-            for (size_t i = 0; i <= (history.size() / 2 + it.count); i++) {
-                uint8_t &value = **it;
-
-                // Save historic values for kernel application
-                history[history_base] = {it.pos(), value};
-                history_base = (history_base + 1) % history.size();
-
-                // Mark ray for debugging
-                // value = 0;
-
-                // Advance iterator
-                if (i < (size_t)it.count) {
-                    ++it;
-                }
-
-                // Skip calculation for ray points out of bounds
-                if (i <= history.size() / 2) {
-                    continue;
-                }
-
-                // Apply kernel convolution
-                int16_t convolve_result = 0;
-                for (size_t j = 0; j < history.size(); j++) {
-                    size_t k = (history_base + j) % history.size();
-                    convolve_result +=
-                        history[k].second * KERNEL[KERNEL.size() - j - 1];
-                }
-
-                // Get position for which kernel was calculated
-                size_t center_idx =
-                    (history_base + history.size() / 2) % history.size();
-                cv::Point kernel_pos = history[center_idx].first;
-
-                // Mark edge for debugging
-                if (abs(convolve_result) > params.edge_threshold) {
-                    cv::circle(cv_img->image, kernel_pos, 5, 128, cv::FILLED);
-                }
+            auto edges = detect_edge(cv_img->image, start_pt, end_pt);
+            for (const auto &edge : edges) {
+                cv::circle(cv_img->image, edge, 5, 128, cv::FILLED);
             }
         }
     }
@@ -216,6 +205,57 @@ RayLocalizer::get_camera_extrinsic(const rclcpp::Time &time,
             rot[1][0], rot[1][1], rot[1][2], trans[1],
             rot[2][0], rot[2][1], rot[2][2], trans[2]};
     // clang-format on
+}
+
+std::vector<cv::Point> RayLocalizer::detect_edge(const cv::Mat& img, cv::Point start, cv::Point end) {
+    std::vector<cv::Point> list;
+
+    cv::LineIterator line{img, start, end};
+    // Convolve kernel along line
+    std::array<std::pair<cv::Point, uint8_t>, KERNEL.size()> history{};
+    std::size_t history_base = 0;
+    // Fill history with values of ray start
+    history.fill({line.pos(), **line});
+    for (size_t i = 0; i <= (history.size() / 2 + line.count); i++) {
+        uint8_t &value = **line;
+
+        // Save historic values for kernel application
+        history[history_base] = {line.pos(), value};
+        history_base = (history_base + 1) % history.size();
+
+        // Mark ray for debugging
+        // value = 0;
+
+        // Advance iterator
+        if (i < (size_t)line.count) {
+            ++line;
+        }
+
+        // Skip calculation for ray points out of bounds
+        if (i <= history.size() / 2) {
+            continue;
+        }
+
+        // Apply kernel convolution
+        int16_t convolve_result = 0;
+        for (size_t j = 0; j < history.size(); j++) {
+            size_t k = (history_base + j) % history.size();
+            convolve_result +=
+                history[k].second * KERNEL[KERNEL.size() - j - 1];
+        }
+
+        // Get position for which kernel was calculated
+        size_t center_idx =
+            (history_base + history.size() / 2) % history.size();
+        cv::Point kernel_pos = history[center_idx].first;
+
+        // Note: no absolute value to only detect white->black transitions
+        if (convolve_result > params.edge_threshold) {
+            list.push_back(kernel_pos);
+        }
+    }
+
+    return list;
 }
 
 } // namespace tuw_spike_camera

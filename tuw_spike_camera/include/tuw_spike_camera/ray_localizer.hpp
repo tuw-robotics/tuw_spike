@@ -4,7 +4,10 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include <opencv2/core/mat.hpp>
 #include <opencv2/core/matx.hpp>
+#include <opencv2/core/types.hpp>
+
 #include <rclcpp/logger.hpp>
 #include <tf2_ros/buffer.h>
 #include <image_transport/publisher.hpp>
@@ -32,6 +35,8 @@ class RayLocalizer {
 
     cv::Matx34d get_camera_extrinsic(const rclcpp::Time &time,
                                      const std::string &optical_frame);
+
+    std::vector<cv::Point> detect_edge(const cv::Mat& img, cv::Point start, cv::Point end);
 };
 
 } // namespace tuw_spike_camera
