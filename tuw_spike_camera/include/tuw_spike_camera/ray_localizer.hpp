@@ -3,14 +3,15 @@
 
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/matx.hpp>
 #include <opencv2/core/types.hpp>
 
+#include <image_transport/publisher.hpp>
 #include <rclcpp/logger.hpp>
 #include <tf2_ros/buffer.h>
-#include <image_transport/publisher.hpp>
 
 #include "tuw_spike_camera_ray_localizer_parameters.hpp"
 
@@ -22,7 +23,8 @@ class RayLocalizer {
                           std::shared_ptr<tf2_ros::Buffer> tfBuffer,
                           std::unique_ptr<ParamListener> paramListener,
                           image_transport::Publisher debug_pub);
-    void
+
+    sensor_msgs::msg::LaserScan::UniquePtr
     process_frame(const sensor_msgs::msg::Image::ConstSharedPtr &image,
                   const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info);
 
@@ -36,7 +38,8 @@ class RayLocalizer {
     cv::Matx34d get_camera_extrinsic(const rclcpp::Time &time,
                                      const std::string &optical_frame);
 
-    std::vector<cv::Point> detect_edge(const cv::Mat& img, cv::Point start, cv::Point end);
+    std::vector<cv::Point> detect_edge(const cv::Mat &img, cv::Point start,
+                                       cv::Point end);
 };
 
 } // namespace tuw_spike_camera

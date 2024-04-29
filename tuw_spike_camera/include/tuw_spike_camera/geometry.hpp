@@ -97,7 +97,7 @@ class ProjLine2d : public cv::Vec3d {
     cv::Vec2d direction() const { return {(*this)(1), -(*this)(0)}; }
 };
 
-std::optional<std::pair<cv::Vec2d, cv::Vec2d>> inline ray_intersect(
+std::optional<std::pair<cv::Vec2d, cv::Vec2d>> inline ray_clip(
     const cv::Vec2d ray_start, const cv::Vec2d direction,
     const cv::Rect2d bounds) {
     cv::Vec4d p = {-direction(0), direction(0), -direction(1), direction(1)};

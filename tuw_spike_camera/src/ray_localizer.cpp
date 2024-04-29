@@ -1,6 +1,6 @@
 #include <array>
-#include <utility>
 #include <cmath>
+#include <utility>
 
 #include "rclcpp/logging.hpp"
 #include "tuw_spike_camera/ray_localizer.hpp"
@@ -33,7 +33,7 @@ convolve(const std::array<T, N1> &a, const std::array<T, N2> &b) {
     return result;
 }
 
-template<int Iterations = 100>
+template <int Iterations = 100>
 static constexpr double constexpr_exp(double x) {
     if (std::is_constant_evaluated()) {
         double accum = 1;
@@ -49,8 +49,7 @@ static constexpr double constexpr_exp(double x) {
 }
 
 template <typename T, int N>
-static constexpr std::array<T, N>
-gaussian(T area, double sigma) {
+static constexpr std::array<T, N> gaussian(T area, double sigma) {
     static_assert(N > 0);
     static_assert((N % 2) == 1);
 
@@ -58,12 +57,12 @@ gaussian(T area, double sigma) {
     std::array<double, N> gaussian{};
     double sum = 0.0;
     for (int i = 0; i < N; i++) {
-        double x = (double) (i - N/2);
-        gaussian[i] = constexpr_exp(-0.5*x*x/(sigma*sigma));
+        double x = (double)(i - N / 2);
+        gaussian[i] = constexpr_exp(-0.5 * x * x / (sigma * sigma));
         sum += gaussian[i];
     }
     for (int i = 0; i < N; i++) {
-        result[i] = (T) (area * gaussian[i] / sum);
+        result[i] = (T)(area * gaussian[i] / sum);
     }
     return result;
 }
@@ -86,7 +85,7 @@ RayLocalizer::RayLocalizer(const rclcpp::Logger &logger,
     params = this->param_listener->get_params();
 }
 
-void RayLocalizer::process_frame(
+sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     const sensor_msgs::msg::Image::ConstSharedPtr &image,
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info) {
 
@@ -106,7 +105,7 @@ void RayLocalizer::process_frame(
             get_camera_extrinsic(info->header.stamp, info->header.frame_id);
     } catch (const tf2::TransformException &e) {
         RCLCPP_ERROR(logger, "Failed to get camera transform: %s", e.what());
-        return;
+        return nullptr;
     }
 
     // Get projection matrix from the ray frame to the camera frame
@@ -136,21 +135,33 @@ void RayLocalizer::process_frame(
 
     double start_angle = atan2(start_pt.y(), start_pt.x());
     double end_angle = atan2(end_pt.y(), end_pt.x());
+    double angle_increment =
+        (end_angle - start_angle) / (double)(params.num_rays - 1);
 
     ProjPoint2d ray_center_img = homography * ProjPoint2d(0, 0);
 
     cv::Rect2d viewport{0.5, 0.5, (double)(width - 1), (double)(height - 1)};
 
+    auto laser_scan = std::make_unique<sensor_msgs::msg::LaserScan>();
+    laser_scan->header.frame_id = params.ray_frame;
+    laser_scan->header.stamp = image->header.stamp;
+    laser_scan->angle_increment = angle_increment;
+    laser_scan->angle_min = start_angle;
+    laser_scan->angle_max = end_angle;
+    laser_scan->time_increment = 0;
+    laser_scan->scan_time = 0;
+    laser_scan->range_min = 0;
+    laser_scan->range_max = 100.0;
+    laser_scan->ranges.reserve(params.num_rays);
+
     for (int64_t i = 0; i < params.num_rays; i++) {
-        double angle = std::lerp(start_angle, end_angle,
-                                 i / (double)(params.num_rays - 1));
+        double angle = start_angle + i * angle_increment;
         // Homography H transforms points from ray plane -> image plane
         // H^(-T) transforms lines from ray plane -> image plane
         ProjLine2d line_img = inv_homography.t() * ProjLine2d({0, 0}, angle);
 
-        auto intersection =
-            ray_intersect(static_cast<cv::Point2d>(ray_center_img),
-                          line_img.direction(), viewport);
+        auto intersection = ray_clip(static_cast<cv::Point2d>(ray_center_img),
+                                     line_img.direction(), viewport);
 
         if (intersection) {
             auto [start, end] = *intersection;
@@ -161,7 +172,19 @@ void RayLocalizer::process_frame(
             for (const auto &edge : edges) {
                 cv::circle(cv_img->image, edge, 5, 128, cv::FILLED);
             }
+
+            if (edges.size() > 0) {
+                // Transform detected point back to ray plane
+                ProjPoint2d ray_point =
+                    inv_homography * ProjPoint2d(edges[0].x, edges[0].y);
+                // Get distance to origin
+                double distance = cv::norm(static_cast<cv::Point2d>(ray_point));
+                laser_scan->ranges.push_back((float)distance);
+                continue;
+            }
         }
+
+        laser_scan->ranges.push_back(std::numeric_limits<float>::infinity());
     }
 
     // Create an affine transform to map the ray XY plane to the debug
@@ -188,6 +211,8 @@ void RayLocalizer::process_frame(
 
     debug_pub.publish(cv_img->toImageMsg());
     // debug_pub.publish(debug_image.toImageMsg());
+
+    return laser_scan;
 }
 
 cv::Matx34d
@@ -207,7 +232,8 @@ RayLocalizer::get_camera_extrinsic(const rclcpp::Time &time,
     // clang-format on
 }
 
-std::vector<cv::Point> RayLocalizer::detect_edge(const cv::Mat& img, cv::Point start, cv::Point end) {
+std::vector<cv::Point>
+RayLocalizer::detect_edge(const cv::Mat &img, cv::Point start, cv::Point end) {
     std::vector<cv::Point> list;
 
     cv::LineIterator line{img, start, end};
