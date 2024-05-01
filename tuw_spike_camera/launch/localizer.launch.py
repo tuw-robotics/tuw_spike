@@ -50,7 +50,8 @@ def generate_launch_description():
         extra_arguments=[{'use_intra_process_comms': True}],
         namespace="camera",
         parameters=[{
-            'ray_frame': 'ray_origin'
+            'ray_frame': 'ray_origin',
+            'num_rays': 50
         }]
     )
 

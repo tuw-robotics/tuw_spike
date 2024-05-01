@@ -75,6 +75,8 @@ static constexpr auto KERNEL_GAUSS = gaussian<int16_t, 5>(100, 0.8);
 // static constexpr auto KERNEL = convolve(KERNEL_DIFF, KERNEL_GAUSS);
 static constexpr auto KERNEL = KERNEL_DIFF;
 
+static constexpr bool DEBUG_WARPED = false;
+
 RayLocalizer::RayLocalizer(const rclcpp::Logger &logger,
                            std::shared_ptr<tf2_ros::Buffer> tfBuffer,
                            std::unique_ptr<ParamListener> paramListener,
@@ -90,6 +92,11 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info) {
 
     auto cv_img = cv_bridge::toCvShare(image, "mono8");
+
+    std_msgs::msg::Header debug_header;
+    debug_header.frame_id = params.ray_frame;
+    debug_header.stamp = image->header.stamp;
+    cv_bridge::CvImage debug_image{debug_header, "mono8"};
 
     if (param_listener->is_old(params)) {
         params = param_listener->get_params();
@@ -127,6 +134,32 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
         homography *= -1;
     }
     auto inv_homography = homography.inv();
+
+    // Create an affine transform to map the ray XY plane to the debug
+    // image dimensions
+    double scale = params.debug_img_size / params.debug_real_size;
+    double offset = params.debug_img_size / 2;
+
+    // clang-format off
+    cv::Matx33d debug_affine{scale, 0,      0,
+                             0, scale, offset,
+                             0,     0,      1};
+    // clang-format on
+
+    double debug_nonwarped_scale =
+        params.debug_img_size / (double)cv_img->image.cols;
+
+    if constexpr (DEBUG_WARPED) {
+        cv::warpPerspective(
+            cv_img->image, debug_image.image, debug_affine * inv_homography,
+            cv::Size(params.debug_img_size, params.debug_img_size),
+            cv::InterpolationFlags::INTER_NEAREST,
+            cv::BorderTypes::BORDER_CONSTANT);
+    } else {
+        cv::resize(cv_img->image, debug_image.image, cv::Size(),
+                   debug_nonwarped_scale, debug_nonwarped_scale,
+                   cv::INTER_AREA);
+    }
 
     ProjPoint2d start_pt =
         inv_homography * ProjPoint2d(0.0, (double)(height - 1));
@@ -168,15 +201,17 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
             auto start_pt = static_cast<cv::Point>(start);
             auto end_pt = static_cast<cv::Point>(end);
 
-            auto edges = detect_edge(cv_img->image, start_pt, end_pt);
-            for (const auto &edge : edges) {
-                cv::circle(cv_img->image, edge, 5, 128, cv::FILLED);
-            }
+            cv::line(debug_image.image, start_pt * debug_nonwarped_scale,
+                     end_pt * debug_nonwarped_scale, 0);
 
-            if (edges.size() > 0) {
+            auto edge = detect_edge(cv_img->image, start_pt, end_pt);
+            if (edge) {
+                // Debug output
+                cv::circle(debug_image.image, (*edge) * debug_nonwarped_scale,
+                           2, 128, cv::FILLED);
                 // Transform detected point back to ray plane
                 ProjPoint2d ray_point =
-                    inv_homography * ProjPoint2d(edges[0].x, edges[0].y);
+                    inv_homography * ProjPoint2d(edge->x, edge->y);
                 // Get distance to origin
                 double distance = cv::norm(static_cast<cv::Point2d>(ray_point));
                 laser_scan->ranges.push_back((float)distance);
@@ -187,30 +222,7 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
         laser_scan->ranges.push_back(std::numeric_limits<float>::infinity());
     }
 
-    // Create an affine transform to map the ray XY plane to the debug
-    // image dimensions
-    double scale = params.debug_img_size / params.debug_real_size;
-    double offset = params.debug_img_size / 2;
-
-    // clang-format off
-    cv::Matx33d debug_affine{scale, 0,      0,
-                             0, scale, offset,
-                             0,     0,      1};
-    // clang-format on
-
-    std_msgs::msg::Header debug_header;
-    debug_header.frame_id = params.ray_frame;
-    debug_header.stamp = image->header.stamp;
-    cv_bridge::CvImage debug_image{debug_header, "mono8"};
-
-    cv::warpPerspective(cv_img->image, debug_image.image,
-                        debug_affine * inv_homography,
-                        cv::Size(params.debug_img_size, params.debug_img_size),
-                        cv::InterpolationFlags::INTER_NEAREST,
-                        cv::BorderTypes::BORDER_CONSTANT);
-
-    debug_pub.publish(cv_img->toImageMsg());
-    // debug_pub.publish(debug_image.toImageMsg());
+    debug_pub.publish(debug_image.toImageMsg());
 
     return laser_scan;
 }
@@ -232,7 +244,7 @@ RayLocalizer::get_camera_extrinsic(const rclcpp::Time &time,
     // clang-format on
 }
 
-std::vector<cv::Point>
+std::optional<cv::Point>
 RayLocalizer::detect_edge(const cv::Mat &img, cv::Point start, cv::Point end) {
     std::vector<cv::Point> list;
 
@@ -277,11 +289,11 @@ RayLocalizer::detect_edge(const cv::Mat &img, cv::Point start, cv::Point end) {
 
         // Note: no absolute value to only detect white->black transitions
         if (convolve_result > params.edge_threshold) {
-            list.push_back(kernel_pos);
+            return kernel_pos;
         }
     }
 
-    return list;
+    return std::nullopt;
 }
 
 } // namespace tuw_spike_camera

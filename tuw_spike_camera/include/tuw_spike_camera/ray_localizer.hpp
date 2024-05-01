@@ -38,8 +38,8 @@ class RayLocalizer {
     cv::Matx34d get_camera_extrinsic(const rclcpp::Time &time,
                                      const std::string &optical_frame);
 
-    std::vector<cv::Point> detect_edge(const cv::Mat &img, cv::Point start,
-                                       cv::Point end);
+    std::optional<cv::Point> detect_edge(const cv::Mat &img, cv::Point start,
+                                         cv::Point end);
 };
 
 } // namespace tuw_spike_camera
