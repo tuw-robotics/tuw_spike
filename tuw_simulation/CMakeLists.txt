@@ -19,7 +19,7 @@ find_package(Boost REQUIRED)
 
 find_package(ignition-transport8 QUIET REQUIRED OPTIONAL_COMPONENTS log)
 
-add_executable(tuw_simulation src/test.cpp)
+add_executable(tuw_simulation src/spawn_robot.cpp)
 ament_target_dependencies(tuw_simulation PUBLIC rclcpp std_msgs)
 
 target_link_libraries(tuw_simulation PUBLIC Boost::boost ignition-transport8::core)

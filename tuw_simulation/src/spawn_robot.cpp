@@ -16,6 +16,8 @@
 #include "ignition/msgs/stringmsg.pb.h"
 #include "ignition/msgs/scene.pb.h"
 #include "ignition/msgs/stringmsg_v.pb.h"
+#include "ignition/msgs/world_control.pb.h"
+#include "ignition/msgs/entity.pb.h"
 
 using namespace std::chrono_literals;
 
@@ -31,11 +33,14 @@ int main(int argc, char *argv[]) {
     auto y = node->declare_parameter<double>("Y", 0.0);
     double z = 0.4;
 
-    std::string name =
-        node->declare_parameter<std::string>("model_name", "robot0");
+    std::string name = node->declare_parameter<std::string>("model_name", "robot0");
 
     bool exists = false;
     bool success = true;
+
+    ignition::msgs::Entity test;
+
+    
 
     gz::transport::Node node_ign;
     ignition::msgs::Scene res;
@@ -43,17 +48,25 @@ int main(int argc, char *argv[]) {
 
     bool result;
     bool r = node_ign.Request("/world/plain_world/scene/info", req, 1000, res, result);
-
-    for (int i = 0; i < res.model_size(); i++) {
-        auto tmp = res.model(i).name();
-        RCLCPP_INFO(node->get_logger(), "%s", tmp.c_str());
-        if (name.compare(tmp) == 0) {
-            RCLCPP_INFO(node->get_logger(), "model already exists");
-            exists = true;
+    if (r) {
+        if (result) {
+            for (int i = 0; i < res.model_size(); i++) {
+                auto tmp = res.model(i).name();
+                RCLCPP_INFO(node->get_logger(), "%s", tmp.c_str());
+                if (name.compare(tmp) == 0) {
+                    RCLCPP_INFO(node->get_logger(), "model already exists");
+                    exists = true;
+                    success = false;
+                }
+            }
+        } else {
+            std::cerr << "Service call failed" << std::endl;
             success = false;
         }
+    } else {
+        std::cerr << "Service call timed out" << std::endl;
+        success = false;
     }
-
     
     if (!exists) {
         ignition::msgs::EntityFactory req_c;
@@ -77,7 +90,6 @@ int main(int argc, char *argv[]) {
                 std::cerr << "Service call timed out" << std::endl;
                 success = false;
             }
-
     }
 
     std::cout << success;

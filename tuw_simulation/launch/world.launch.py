@@ -21,7 +21,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([ros_gz_sim, "launch", "gz_sim.launch.py"])),
         launch_arguments={
             # Launch simulation automatically started (-r)
-            "gz_args": [PathJoinSubstitution([spike_sim, "world", "empty.sdf"]), TextSubstitution(text=" -r --verbose")],
+            "gz_args": [PathJoinSubstitution([spike_sim, "world", "empty.sdf"]), TextSubstitution(text=" ")],
             "on_exit_shutdown": "True"
         }.items()
     )
