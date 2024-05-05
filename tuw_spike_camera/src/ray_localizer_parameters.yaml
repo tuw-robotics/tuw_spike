@@ -26,6 +26,12 @@ tuw_spike_camera:
       gt<>: [0]
     }
   }
+  debug_warped: {
+    type: bool,
+    description: "Output the warped image as debug image",
+    default_value: false,
+    read_only: false
+  }
   num_rays: {
     type: int,
     description: "Number of rays to create",

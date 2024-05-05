@@ -24,7 +24,8 @@ class ProjPoint2d : public cv::Vec3d {
     ProjPoint2d(const cv::Vec3d &&vec) // NOLINT(google-explicit-constructor)
         : cv::Vec3d(vec) {}
     ProjPoint2d(double x, double y) : cv::Vec3d(x, y, 1.0) {}
-    ProjPoint2d(const cv::Vec2d point) : ProjPoint2d(point(0), point(1)) {}
+    ProjPoint2d(const cv::Vec2d &point) // NOLINT(google-explicit-constructor)
+        : ProjPoint2d(point(0), point(1)) {}
 
     /**
      * @return True, if the point is on the line at infinity
@@ -36,14 +37,14 @@ class ProjPoint2d : public cv::Vec3d {
      * @note Only use this conversion if the point is not at infinity.
      * @see ProjPoint2d::at_infinity
      */
-    double x() const { return (*this)(0) / (*this)(2); }
+    [[nodiscard]] double x() const { return (*this)(0) / (*this)(2); }
 
     /**
      * @return The y coordinate of the represented point
      * @note Only use this conversion if the point is not at infinity.
      * @see ProjPoint2d::at_infinity
      */
-    double y() const { return (*this)(1) / (*this)(2); }
+    [[nodiscard]] double y() const { return (*this)(1) / (*this)(2); }
 
     /**
      * @brief Convert to a point in K²
@@ -75,7 +76,7 @@ class ProjLine2d : public cv::Vec3d {
      * @param point A point on the line
      * @param dir A vector tangent to the line direction
      */
-    ProjLine2d(const cv::Vec2d point, const cv::Vec2d dir)
+    ProjLine2d(const cv::Vec2d& point, const cv::Vec2d& dir)
         : cv::Vec3d(-dir(1), dir(0), -point.dot(dir)) {}
 
     /**
@@ -84,22 +85,22 @@ class ProjLine2d : public cv::Vec3d {
      * @param angle The line angle in radians, counterclockwise from the
      * positive x axis.
      */
-    ProjLine2d(const cv::Vec2d point, double angle)
+    ProjLine2d(const cv::Vec2d& point, double angle)
         : ProjLine2d(point, {cos(angle), sin(angle)}) {}
 
-    ProjPoint2d intersect(const ProjLine2d &other) const {
+    [[nodiscard]] ProjPoint2d intersect(const ProjLine2d &other) const {
         return cross(other);
     }
 
     /**
      * @return The line direction as a vector in R²
      */
-    cv::Vec2d direction() const { return {(*this)(1), -(*this)(0)}; }
+    [[nodiscard]] cv::Vec2d direction() const { return {(*this)(1), -(*this)(0)}; }
 };
 
 std::optional<std::pair<cv::Vec2d, cv::Vec2d>> inline ray_clip(
-    const cv::Vec2d ray_start, const cv::Vec2d direction,
-    const cv::Rect2d bounds) {
+    const cv::Vec2d& ray_start, const cv::Vec2d& direction,
+    const cv::Rect2d& bounds) {
     cv::Vec4d p = {-direction(0), direction(0), -direction(1), direction(1)};
     cv::Vec4d q = {
         ray_start(0) - bounds.x,

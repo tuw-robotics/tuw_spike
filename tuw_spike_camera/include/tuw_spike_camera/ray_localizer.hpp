@@ -13,6 +13,7 @@
 #include <rclcpp/logger.hpp>
 #include <tf2_ros/buffer.h>
 
+#include "geometry.hpp"
 #include "tuw_spike_camera_ray_localizer_parameters.hpp"
 
 namespace tuw_spike_camera {
@@ -37,11 +38,21 @@ class RayLocalizer {
 
     cv::Matx34d get_camera_extrinsic(const rclcpp::Time &time,
                                      const std::string &optical_frame);
-    cv::Matx33d get_homography(const rclcpp::Time &time,
-                               const std::string &optical_frame);
+    std::optional<cv::Matx33d>
+    get_homography(const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info);
 
-    std::optional<std::pair<cv::Point, cv::Vec2d>>
+    float ray_cast(const cv::Mat &image, const cv::Mat &debug_image,
+                   const cv::Matx33d &inv_homography,
+                   const cv::Matx33d &debug_transform,
+                   const cv::Rect2d &viewport,
+                   const tuw_spike_camera::ProjPoint2d &ray_center,
+                   double angle);
+
+    [[nodiscard]] std::optional<std::pair<cv::Point, cv::Vec2d>>
     detect_edge(const cv::Mat &img, cv::Point start, cv::Point end) const;
+
+    cv::Matx33d setup_debug_image(const cv::Mat &image, cv::Mat &debug_image,
+                                  const cv::Matx33d &inv_homography) const;
 };
 
 } // namespace tuw_spike_camera
