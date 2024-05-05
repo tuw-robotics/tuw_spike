@@ -10,66 +10,14 @@
 // Need for tf2 conversion function to link
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+#include "tuw_spike_camera/filter_kernel.hpp"
 #include "tuw_spike_camera/geometry.hpp"
 
 using namespace std::chrono_literals;
 
 namespace tuw_spike_camera {
 
-template <typename T, size_t N1, size_t N2>
-static constexpr std::array<T, N1 + N2 - 1>
-convolve(const std::array<T, N1> &a, const std::array<T, N2> &b) {
-    static_assert(N1 > 0);
-    static_assert(N2 > 0);
-    static_assert((N2 % 2) == 1);
-
-    std::array<T, N1 + N2 - 1> result{};
-    for (size_t i = 0; i < result.size(); i++) {
-        for (size_t j = 0; j < N2; j++) {
-            size_t k = i - j;
-            result[i] += ((k < N1) ? a[k] : 0) * b[j];
-        }
-    }
-    return result;
-}
-
-template <int Iterations = 100>
-static constexpr double constexpr_exp(double x) {
-    if (std::is_constant_evaluated()) {
-        double accum = 1;
-        double result = 0;
-        for (int i = 1; i <= Iterations; i++) {
-            result += accum;
-            accum *= x / i;
-        }
-        return result;
-    } else {
-        return exp(x);
-    }
-}
-
-template <typename T, int N>
-static constexpr std::array<T, N> gaussian(T area, double sigma) {
-    static_assert(N > 0);
-    static_assert((N % 2) == 1);
-
-    std::array<T, N> result{};
-    std::array<double, N> gaussian{};
-    double sum = 0.0;
-    for (int i = 0; i < N; i++) {
-        double x = (double)(i - N / 2);
-        gaussian[i] = constexpr_exp(-0.5 * x * x / (sigma * sigma));
-        sum += gaussian[i];
-    }
-    for (int i = 0; i < N; i++) {
-        result[i] = (T)(area * gaussian[i] / sum);
-    }
-    return result;
-}
-
-static constexpr auto KERNEL_DIFF = std::to_array<int16_t>({-1, 0, 1});
-static constexpr auto KERNEL_DIRAC =
-    std::to_array<int16_t>({0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0});
+static constexpr auto KERNEL_DIFF = std::to_array<int16_t>({1, 0, -1});
 static constexpr auto KERNEL_GAUSS = gaussian<int16_t, 5>(100, 0.8);
 
 // static constexpr auto KERNEL = convolve(KERNEL_DIFF, KERNEL_GAUSS);
@@ -96,7 +44,7 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     std_msgs::msg::Header debug_header;
     debug_header.frame_id = params.ray_frame;
     debug_header.stamp = image->header.stamp;
-    cv_bridge::CvImage debug_image{debug_header, "mono8"};
+    cv_bridge::CvImage debug_image{debug_header, "bgr8"};
 
     if (param_listener->is_old(params)) {
         params = param_listener->get_params();
@@ -159,6 +107,7 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
         cv::resize(cv_img->image, debug_image.image, cv::Size(),
                    debug_nonwarped_scale, debug_nonwarped_scale,
                    cv::INTER_AREA);
+        cv::cvtColor(debug_image.image, debug_image.image, cv::COLOR_GRAY2BGR);
     }
 
     ProjPoint2d start_pt =
@@ -202,16 +151,22 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
             auto end_pt = static_cast<cv::Point>(end);
 
             cv::line(debug_image.image, start_pt * debug_nonwarped_scale,
-                     end_pt * debug_nonwarped_scale, 0);
+                     end_pt * debug_nonwarped_scale, cv::Scalar(255, 0, 0));
 
             auto edge = detect_edge(cv_img->image, start_pt, end_pt);
             if (edge) {
+                auto [pt, gradient] = *edge;
                 // Debug output
-                cv::circle(debug_image.image, (*edge) * debug_nonwarped_scale,
-                           2, 128, cv::FILLED);
+                cv::circle(debug_image.image, pt * debug_nonwarped_scale, 2,
+                           cv::Scalar(0, 0, 255), cv::FILLED);
+                cv::line(debug_image.image, pt * debug_nonwarped_scale,
+                         cv::Point2d(pt) * debug_nonwarped_scale +
+                             cv::Point2d(cv::normalize(gradient) * 50),
+                         cv::Scalar(0, 255, 0));
+
                 // Transform detected point back to ray plane
                 ProjPoint2d ray_point =
-                    inv_homography * ProjPoint2d(edge->x, edge->y);
+                    inv_homography * ProjPoint2d(pt.x, pt.y);
                 // Get distance to origin
                 double distance = cv::norm(static_cast<cv::Point2d>(ray_point));
                 laser_scan->ranges.push_back((float)distance);
@@ -244,52 +199,25 @@ RayLocalizer::get_camera_extrinsic(const rclcpp::Time &time,
     // clang-format on
 }
 
-std::optional<cv::Point>
-RayLocalizer::detect_edge(const cv::Mat &img, cv::Point start, cv::Point end) {
-    std::vector<cv::Point> list;
-
-    cv::LineIterator line{img, start, end};
-    // Convolve kernel along line
-    std::array<std::pair<cv::Point, uint8_t>, KERNEL.size()> history{};
-    std::size_t history_base = 0;
-    // Fill history with values of ray start
-    history.fill({line.pos(), **line});
-    for (size_t i = 0; i <= (history.size() / 2 + line.count); i++) {
-        uint8_t &value = **line;
-
-        // Save historic values for kernel application
-        history[history_base] = {line.pos(), value};
-        history_base = (history_base + 1) % history.size();
-
-        // Mark ray for debugging
-        // value = 0;
-
-        // Advance iterator
-        if (i < (size_t)line.count) {
-            ++line;
-        }
-
-        // Skip calculation for ray points out of bounds
-        if (i <= history.size() / 2) {
-            continue;
-        }
-
-        // Apply kernel convolution
-        int16_t convolve_result = 0;
-        for (size_t j = 0; j < history.size(); j++) {
-            size_t k = (history_base + j) % history.size();
-            convolve_result +=
-                history[k].second * KERNEL[KERNEL.size() - j - 1];
-        }
-
-        // Get position for which kernel was calculated
-        size_t center_idx =
-            (history_base + history.size() / 2) % history.size();
-        cv::Point kernel_pos = history[center_idx].first;
+std::optional<std::pair<cv::Point, cv::Vec2d>>
+RayLocalizer::detect_edge(const cv::Mat &img, cv::Point start,
+                          cv::Point end) const {
+    FilterLineIterator<uint8_t, int16_t> line{img, std::move(start),
+                                              std::move(end), KERNEL};
+    while (++line) {
+        auto [pos, filter_value] = *line;
 
         // Note: no absolute value to only detect white->black transitions
-        if (convolve_result > params.edge_threshold) {
-            return kernel_pos;
+        if (-filter_value > params.edge_threshold) {
+            cv::Mat roi(img, cv::Rect(pos, cv::Size(1, 1)));
+            cv::Matx<int16_t, 1, 1> dx, dy;
+            cv::Sobel(roi, dx, CV_16SC1, 1, 0, 3);
+            cv::Sobel(roi, dy, CV_16SC1, 0, 1, 3);
+
+            cv::Vec2d gradient{static_cast<double>(dx(0)),
+                               static_cast<double>(dy(0))};
+
+            return std::make_pair(pos, gradient);
         }
     }
 

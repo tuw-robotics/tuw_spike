@@ -3,12 +3,15 @@ from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, Command, FindExecutable, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, Command, FindExecutable, PathJoinSubstitution, PythonExpression
 from launch.conditions import IfCondition, UnlessCondition
 
 def generate_launch_description():
     replay = IfCondition(LaunchConfiguration("replay"))
     not_replay = UnlessCondition(LaunchConfiguration("replay"))
+    prefix = PythonExpression([
+        "'gdbserver :2222' if bool(", LaunchConfiguration("debug"), ") else ''"
+    ])
 
     capture_comp = ComposableNode(
         condition=not_replay,
@@ -51,7 +54,8 @@ def generate_launch_description():
         namespace="camera",
         parameters=[{
             'ray_frame': 'ray_origin',
-            'num_rays': 50
+            'num_rays': 50,
+            'debug_img_size': 1280
         }]
     )
 
@@ -93,7 +97,7 @@ def generate_launch_description():
         package='rclcpp_components',
         executable='component_container',
         #ros_arguments=["--log-level", "debug"],
-        #prefix='gdbserver :2222',
+        prefix=prefix,
         composable_node_descriptions=[
             capture_comp,
             undistort_comp,
@@ -104,6 +108,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument("replay", default_value="False"),
+        DeclareLaunchArgument("debug", default_value="False"),
         DeclareLaunchArgument('model_name',  default_value="robot0"),
         container,
         robot_state_publisher,
