@@ -6,11 +6,14 @@ add_library(tuw_spike_camera_ray_localizer_node SHARED
 generate_parameter_library(tuw_spike_camera_ray_localizer_parameters
   ray_localizer_parameters.yaml)
 
-target_link_libraries(tuw_spike_camera_ray_localizer_node
+target_link_libraries(tuw_spike_camera_ray_localizer_node PUBLIC
   tuw_spike_camera_common
   tuw_spike_camera_ray_localizer_parameters)
 
-ament_target_dependencies(tuw_spike_camera_ray_localizer_node
+ament_target_dependencies(tuw_spike_camera_ray_localizer_node PUBLIC
   tf2
   tf2_ros
   tf2_geometry_msgs)
+
+# Add stack traces on crashes
+target_link_libraries(tuw_spike_camera_ray_localizer_node PRIVATE Backward::Object)

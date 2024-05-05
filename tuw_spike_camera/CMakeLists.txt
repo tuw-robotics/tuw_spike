@@ -16,6 +16,16 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
+include(FetchContent)
+
+# Add stack traces on crashes
+FetchContent_Declare(backward
+  GIT_REPOSITORY https://github.com/bombela/backward-cpp
+  GIT_TAG master
+)
+FetchContent_MakeAvailable(backward)
+set_property(TARGET backward_object PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 # Common flags and dependencies
 add_library(tuw_spike_camera_common INTERFACE)
 target_include_directories(tuw_spike_camera_common INTERFACE
