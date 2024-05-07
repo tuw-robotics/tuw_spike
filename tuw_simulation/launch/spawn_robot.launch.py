@@ -26,7 +26,7 @@ def generate_launch_description():
             " ",
             PathJoinSubstitution(
                 [
-                    FindPackageShare("tuw_simulation"),
+                    FindPackageShare("tuw_description"),
                     "model",
                     "spike",
                     "main.xacro",
