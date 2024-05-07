@@ -39,7 +39,7 @@ def generate_launch_description():
     
     spawner = Node(
         package="tuw_simulation",
-        executable="tuw_simulation",
+        executable="spawn",
         parameters=[{
                 "X": LaunchConfiguration('X'),
                 "Y": LaunchConfiguration('Y'),

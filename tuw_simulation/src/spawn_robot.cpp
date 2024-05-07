@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
     auto x = node->declare_parameter<double>("X", 0.0);
     auto y = node->declare_parameter<double>("Y", 0.0);
-    double z = 0.4;
+    double z = 0.1;
 
     std::string name = node->declare_parameter<std::string>("model_name", "robot0");
 
