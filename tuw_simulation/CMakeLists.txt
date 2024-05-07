@@ -13,9 +13,27 @@ find_package(ament_cmake_python REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(xacro REQUIRED)
 find_package(rclpy REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(Boost REQUIRED)
+
+find_package(ignition-transport8 QUIET REQUIRED OPTIONAL_COMPONENTS log)
+
+add_executable(spawn src/spawn_robot.cpp)
+ament_target_dependencies(spawn PUBLIC rclcpp std_msgs)
+add_executable(reset src/reset_robot.cpp)
+ament_target_dependencies(reset PUBLIC rclcpp std_msgs)
+
+target_link_libraries(reset PUBLIC Boost::boost ignition-transport8::core)
+target_link_libraries(spawn PUBLIC Boost::boost ignition-transport8::core)
+
+install(TARGETS
+  spawn reset
+  DESTINATION lib/${PROJECT_NAME})
+
 
 install(DIRECTORY 
-        model world launch
+        world launch
         DESTINATION share/${PROJECT_NAME}
 )
 

@@ -37,7 +37,7 @@
             <direction>-0.5 0.1 -0.9</direction>
         </light>
 
-        <model name="ground_plane">
+        <model name="my_ground_plane">
             <static>true</static>
             <link name="link">
                 <collision name="collision">
@@ -51,13 +51,20 @@
                     <geometry>
                         <plane>
                         <normal>0 0 1</normal>
-                        <size>100 100</size>
+                        <size>1 1</size>
                         </plane>
                     </geometry>
                     <material>
-                        <ambient>0.8 0.8 0.8 1</ambient>
-                        <diffuse>0.8 0.8 0.8 1</diffuse>
-                        <specular>0.8 0.8 0.8 1</specular>
+                      <ambient>1 1 1 1</ambient>
+                      <diffuse>1 1 1 1</diffuse>
+                      <specular>0.1 0.1 0.1 1</specular>
+                      <pbr>
+                        <metal>
+                            <roughness>0.1</roughness>
+                            <metalness>0.1</metalness>
+                          <albedo_map>images/checkerBoard.png</albedo_map>
+                        </metal>
+                      </pbr>
                     </material>
                 </visual>
             </link>

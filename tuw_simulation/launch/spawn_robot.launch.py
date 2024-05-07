@@ -26,7 +26,7 @@ def generate_launch_description():
             " ",
             PathJoinSubstitution(
                 [
-                    FindPackageShare("tuw_simulation"),
+                    FindPackageShare("tuw_description"),
                     "model",
                     "spike",
                     "main.xacro",
@@ -39,7 +39,7 @@ def generate_launch_description():
     
     spawner = Node(
         package="tuw_simulation",
-        executable="spawn_robot.py",
+        executable="tuw_simulation",
         parameters=[{
                 "X": LaunchConfiguration('X'),
                 "Y": LaunchConfiguration('Y'),
@@ -66,7 +66,7 @@ def generate_launch_description():
             
     def error_handling(event):
         code = event.text.decode().strip()
-        if code == '0':
+        if code == '1':
             return [bridge, robot_state_publisher]
         else:
             return LogInfo(msg=f"aborting launch")
