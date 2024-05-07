@@ -40,11 +40,56 @@ tuw_spike_camera:
       gt<>: [0]
     }
   }
-  edge_threshold: {
+  edge_enter_threshold: {
     type: int,
-    description: "Threshold for detecting an edge",
+    description: "Threshold for detecting the edge entry",
     default_value: 100,
     validation: {
-      bounds<>: [0, 32767],
+      bounds<>: [0, 32767]
+    }
+  }
+  edge_exit_threshold: {
+    type: int,
+    description: "Threshold for detecting the edge exit",
+    default_value: 100,
+    validation: {
+      bounds<>: [ 0, 32767 ]
+    }
+  }
+  edge_normal_alignment_threshold: {
+    type: double,
+    description: "Threshold for detecting an edge depending on enter/exit normals, cosine of angle between normals",
+    default_value: 0.6,
+    validation: {
+      bounds<>: [ 0.0, 1.0 ]
+    }
+  }
+  edge_min_width: {
+    type: double,
+    description: "Minimum edge width threshold",
+    default_value: 0,
+    validation: {
+      gt_eq<>: [0]
+    }
+  }
+  edge_max_width: {
+    type: double,
+    description: "Maximum edge width threshold, negative to disable check",
+    default_value: -1.0
+  }
+  edge_gradient_filter: {
+    type: string,
+    description: "Type of kernel applied to get gradient direction for edges",
+    default_value: "sobel",
+    validation: {
+      one_of<>: [["sobel", "scharr"]]
+    }
+  }
+  edge_sobel_filter_size: {
+    type: int,
+    description: "Size of sobel kernel applied to get gradient direction for edges",
+    default_value: 3,
+    validation: {
+      one_of<>: [[3, 5, 7, 9]]
     }
   }

@@ -26,11 +26,15 @@ class ProjPoint2d : public cv::Vec3d {
     ProjPoint2d(double x, double y) : cv::Vec3d(x, y, 1.0) {}
     ProjPoint2d(const cv::Vec2d &point) // NOLINT(google-explicit-constructor)
         : ProjPoint2d(point(0), point(1)) {}
+    ProjPoint2d(const cv::Point2d &point) // NOLINT(google-explicit-constructor)
+        : ProjPoint2d(point.x, point.y) {}
 
     /**
      * @return True, if the point is on the line at infinity
      */
-    bool at_infinity() { return abs((*this)(2)) <= DBL_EPSILON; }
+    [[nodiscard]] bool at_infinity() const {
+        return abs((*this)(2)) <= DBL_EPSILON;
+    }
 
     /**
      * @return The x coordinate of the represented point
@@ -55,6 +59,22 @@ class ProjPoint2d : public cv::Vec3d {
     template <typename K> explicit operator cv::Point_<K>() const {
         return {static_cast<K>(x()), static_cast<K>(y())};
     }
+
+    /**
+     * @brief Calculate distance to another point
+     * @param other the point to calculate the distance to
+     * @return +infinity, if one of the points is at infinity,
+     * their Euclidean distance otherwise.
+     */
+    [[nodiscard]] double distance(const ProjPoint2d &other) const {
+        if (at_infinity() || other.at_infinity()) {
+            return std::numeric_limits<double>::infinity();
+        } else {
+            double dx = x() - other.x();
+            double dy = y() - other.y();
+            return sqrt(dx * dx + dy * dy);
+        }
+    }
 };
 
 /**
@@ -76,8 +96,8 @@ class ProjLine2d : public cv::Vec3d {
      * @param point A point on the line
      * @param dir A vector tangent to the line direction
      */
-    ProjLine2d(const cv::Vec2d& point, const cv::Vec2d& dir)
-        : cv::Vec3d(-dir(1), dir(0), -point.dot(dir)) {}
+    ProjLine2d(const cv::Point2d &point, const cv::Vec2d &dir)
+        : cv::Vec3d(-dir(1), dir(0), dir(1) * point.x - dir(0) * point.y) {}
 
     /**
      * @brief Create a line using a point on the line and the line angle.
@@ -85,7 +105,7 @@ class ProjLine2d : public cv::Vec3d {
      * @param angle The line angle in radians, counterclockwise from the
      * positive x axis.
      */
-    ProjLine2d(const cv::Vec2d& point, double angle)
+    ProjLine2d(const cv::Point2d &point, double angle)
         : ProjLine2d(point, {cos(angle), sin(angle)}) {}
 
     [[nodiscard]] ProjPoint2d intersect(const ProjLine2d &other) const {
@@ -95,12 +115,14 @@ class ProjLine2d : public cv::Vec3d {
     /**
      * @return The line direction as a vector in R²
      */
-    [[nodiscard]] cv::Vec2d direction() const { return {(*this)(1), -(*this)(0)}; }
+    [[nodiscard]] cv::Vec2d direction() const {
+        return cv::normalize(cv::Vec2d((*this)(1), -(*this)(0)));
+    }
 };
 
 std::optional<std::pair<cv::Vec2d, cv::Vec2d>> inline ray_clip(
-    const cv::Vec2d& ray_start, const cv::Vec2d& direction,
-    const cv::Rect2d& bounds) {
+    const cv::Vec2d &ray_start, const cv::Vec2d &direction,
+    const cv::Rect2d &bounds) {
     cv::Vec4d p = {-direction(0), direction(0), -direction(1), direction(1)};
     cv::Vec4d q = {
         ray_start(0) - bounds.x,
