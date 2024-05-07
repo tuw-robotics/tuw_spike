@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:property name="PI" value="3.1415926535897931" />    
+
+    <!-- wheel -->
+    <xacro:property name="wheel_x" value="-0.08"/>
+    <xacro:property name="wheel_z" value="-0.016"/>
+    <xacro:property name="wheel_y" value="0.056"/>
+    <xacro:property name="wheel_diameter" value="0.056"/> <!-- lego diameter 56mm -->
+    <xacro:property name="wheel_radius" value="${wheel_diameter/2}"/>
+    <xacro:property name="wheel_len" value="0.0139"/> <!-- lego len 14mm -->
+    <xacro:property name="wheel_mass" value="0.1"/> <!-- kein gewicht von lego noch abwiegen-->
+
+    <!-- Caster wheel -->
+    <xacro:property name="caster_z" value="-0.0344"/>
+    <xacro:property name="caster_x" value="0.056002"/>
+    <xacro:property name="caster_y" value="0"/>
+    <xacro:property name="caster_diameter" value="0.0188"/>
+    <xacro:property name="caster_radius" value="${caster_diameter/2}"/>
+    <xacro:property name="caster_mass" value="0.05"/>
+
+    <!-- base Chassis -->
+    <!-- Werte sind nur vorrübergehend -->
+    <xacro:property name="base_mass" value="0.7"/>
+    <xacro:property name="base_width" value="${wheel_y * 2}"/>
+    <xacro:property name="base_length" value="0.170"/>
+    <xacro:property name="base_height" value="0.09"/>
+
+    <!-- camera -->
+    <xacro:property name="camera_x" value="0.099737"/>
+    <xacro:property name="camera_y" value="0.0"/>
+    <xacro:property name="camera_z" value="0.065674"/>
+    <xacro:property name="camera_angle" value="24.737"/>
+
+    <xacro:property name="battery_width" value="0.041"/>
+    <xacro:property name="battery_length" value="0.071"/>
+    <xacro:property name="battery_height" value="0.022"/>
+    <xacro:property name="battery_x" value="0.012"/>
+    <xacro:property name="battery_y" value="0.0"/>
+    <xacro:property name="battery_z" value="${-0.004 - (battery_height/2)}"/>
+    <xacro:property name="battery_weight" value="0.0"/>
+
+    <xacro:property name="pi_width" value="0.056"/>
+    <xacro:property name="pi_length" value="0.087"/>
+    <xacro:property name="pi_height" value="0.020"/>
+    <xacro:property name="pi_x" value="24.74"/>
+    <xacro:property name="pi_y" value="24.74"/>
+    <xacro:property name="pi_z" value="24.74"/>
+    <xacro:property name="pi_weight" value="0.0"/>
+
+
+    
+
+
+
+
+</robot>
