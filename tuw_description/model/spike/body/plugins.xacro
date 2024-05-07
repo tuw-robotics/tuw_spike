@@ -1,0 +1,32 @@
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <gazebo>
+        <plugin
+            filename="libignition-gazebo-joint-state-publisher-system.so"
+            name="ignition::gazebo::systems::JointStatePublisher">
+
+            <topic>${namespace}/joint_state</topic>
+        </plugin>
+        <plugin
+            filename="libignition-gazebo-diff-drive-system.so"
+            name="ignition::gazebo::systems::DiffDrive">
+
+            <!-- wheels -->
+            <left_joint>left_wheel_joint</left_joint>
+            <right_joint>right_wheel_joint</right_joint>
+            
+
+
+            <wheel_separation>${base_width}</wheel_separation>
+            <wheel_radius>${wheel_radius}</wheel_radius>
+
+            <frame_id>odom</frame_id>
+            <child_frame_id>base_link</child_frame_id>
+            
+            <odom_publish_frequency>10</odom_publish_frequency>
+
+            <!-- output --> 
+            <odom_topic>${namespace}/odom</odom_topic>
+            <topic>${namespace}/cmd_vel</topic>
+        </plugin>
+    </gazebo>
+</robot>

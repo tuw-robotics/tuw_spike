@@ -1,6 +1,9 @@
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch import LaunchDescription
+from launch.actions import ExecuteProcess, DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 
 
 def generate_launch_description():
@@ -51,6 +54,15 @@ def generate_launch_description():
         ]
     )
 
+    rosbag = ExecuteProcess(
+        cmd=['ros2', 'bag', 'record', '/camera/image', '/camera/camera_info'],
+        name='rosbag',
+        output='both',
+        condition=IfCondition(LaunchConfiguration('record'))
+    )
+
     return LaunchDescription([
-        container
+        DeclareLaunchArgument("record", default_value="False"),
+        container,
+        rosbag
     ])

@@ -9,6 +9,12 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclcpp_components</depend>
+  <depend>sensor_msgs</depend>
+  <depend>image_transport</depend>
+  <depend>cv_bridge</depend>
+  <depend>tf2</depend>
+
   <exec_depend>tuw_libcamera</exec_depend>
   <exec_depend>image_pipeline</exec_depend>
 
