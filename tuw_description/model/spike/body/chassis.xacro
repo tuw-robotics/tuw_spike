@@ -1,6 +1,19 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+    <xacro:macro name="engine_inertia" params="y_reflect">
+        <inertial>
+            <origin xyz="${engine_x} ${engine_y} ${engine_z}" rpy="0 0 0" />
+            <mass value="${engine_mass}" />
+            <!-- intertia for a box -->
+            <inertia
+                ixx="${engine_mass / 12.0 * (engine_length*engine_length + engine_height*engine_height)}"
+                iyy="${engine_mass / 12.0 * (engine_height*engine_height + engine_width*engine_width)}"
+                izz="${engine_mass / 12.0 * (engine_width*engine_width + engine_length*engine_length)}"
+                ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
+    </xacro:macro>
+
     <!-- Base Link (Chassis) -->
     <link name="base_link">
         <collision>
@@ -13,23 +26,62 @@
         <visual>
             <origin xyz="0 0 ${-wheel_z+wheel_radius}" rpy="0 0 0" />
             <geometry>
-                <box size="${base_length} ${base_width} ${base_height}" />
+                <box size="${base_length/10} ${base_width/10} ${base_height/10}" />
             </geometry>
             <material name="orange" />
         </visual>
 
         <inertial>
-            <origin xyz="0 0 ${-wheel_z+wheel_radius}" rpy="0 0 0" />
-            <mass value="${base_mass}" />
+            <origin xyz="0.02317682 0.00000690 0.01649155"/>
+            <mass value="${chassis_mass}"/>
+            <inertia ixx="0.00019830" ixy="-0.00000003" ixz="-0.00004422" iyy="0.00034369" iyz="-0.00000001" izz="0.00033507"/>
+        </inertial>
+
+
+        <!-- battery -->
+        <visual>
+            <origin xyz="${battery_x} ${battery_y} ${battery_z}" rpy="0 0 ${pi/2}" />
+            <geometry>
+                <box size="${battery_length} ${battery_width} ${battery_height}" />
+            </geometry>
+            <material name="black" />
+        </visual>
+
+        <inertial>
+            <origin xyz="${battery_x} ${battery_y} ${battery_z}" rpy="0 0 ${pi/2}" />
+            <mass value="${battery_mass}" />
             <!-- intertia for a box -->
             <inertia
-                ixx="${base_mass / 12.0 * (base_length*base_length + base_height*base_height)}"
-                iyy="${base_mass / 12.0 * (base_height*base_height + base_width*base_width)}"
-                izz="${base_mass / 12.0 * (base_width*base_width + base_length*base_length)}"
+                ixx="${battery_mass / 12.0 * (battery_length*battery_length + battery_height*battery_height)}"
+                iyy="${battery_mass / 12.0 * (battery_height*battery_height + battery_width*battery_width)}"
+                izz="${battery_mass / 12.0 * (battery_width*battery_width + battery_length*battery_length)}"
                 ixy="0.0" ixz="0.0" iyz="0.0" />
         </inertial>
-    </link>
 
+        <!-- PI -->
+        <visual>
+            <origin xyz="${pi_x} ${pi_y} ${pi_z}" rpy="0 0 ${pi/2}" />
+            <geometry>
+                <box size="${pi_length} ${pi_width} ${pi_height}" />
+            </geometry>
+            <material name="black" />
+        </visual>
+
+        <inertial>
+            <origin xyz="${pi_x} ${pi_y} ${pi_z}" rpy="0 0 ${pi/2}" />
+            <mass value="${pi_mass}" />
+            <!-- intertia for a box -->
+            <inertia
+                ixx="${pi_mass / 12.0 * (pi_length*pi_length + pi_height*pi_height)}"
+                iyy="${pi_mass / 12.0 * (pi_height*pi_height + pi_width*pi_width)}"
+                izz="${pi_mass / 12.0 * (pi_width*pi_width + pi_length*pi_length)}"
+                ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
+
+        <!-- engine -->
+        <xacro:engine_inertia y_reflect="1" />
+        <xacro:engine_inertia y_reflect="-1" />
+    </link>
     
     <link name="base_footprint"/>
 
@@ -38,6 +90,8 @@
         <child link="base_footprint"/>
         <origin xyz="0.0 0.0 ${-wheel_z+wheel_radius}" rpy="0 0 0"/>
     </joint>
+
+
 
 
 </robot>

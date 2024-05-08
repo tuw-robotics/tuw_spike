@@ -3,16 +3,16 @@
 
     <xacro:property name="PI" value="3.1415926535897931" />    
 
-    <!-- wheel -->
+    <!-- wheel from blender -->
     <xacro:property name="wheel_x" value="-0.08"/>
     <xacro:property name="wheel_z" value="-0.016"/>
     <xacro:property name="wheel_y" value="0.056"/>
     <xacro:property name="wheel_diameter" value="0.056"/> <!-- lego diameter 56mm -->
     <xacro:property name="wheel_radius" value="${wheel_diameter/2}"/>
     <xacro:property name="wheel_len" value="0.0139"/> <!-- lego len 14mm -->
-    <xacro:property name="wheel_mass" value="0.1"/> <!-- kein gewicht von lego noch abwiegen-->
+    <xacro:property name="wheel_mass" value="0.016"/> <!-- kein gewicht von lego noch abwiegen-->
 
-    <!-- Caster wheel -->
+    <!-- Caster wheel from blender -->
     <xacro:property name="caster_z" value="-0.0344"/>
     <xacro:property name="caster_x" value="0.056002"/>
     <xacro:property name="caster_y" value="0"/>
@@ -22,32 +22,47 @@
 
     <!-- base Chassis -->
     <!-- Werte sind nur vorrübergehend -->
-    <xacro:property name="base_mass" value="0.7"/>
+    <xacro:property name="chassis_mass" value="0.123"/>
     <xacro:property name="base_width" value="${wheel_y * 2}"/>
     <xacro:property name="base_length" value="0.170"/>
     <xacro:property name="base_height" value="0.09"/>
 
-    <!-- camera -->
+    <!-- from blender -->
     <xacro:property name="camera_x" value="0.099737"/>
     <xacro:property name="camera_y" value="0.0"/>
     <xacro:property name="camera_z" value="0.065674"/>
     <xacro:property name="camera_angle" value="24.737"/>
+    <xacro:property name="camera_width" value="0.005"/>
+    <xacro:property name="camera_length" value="0.025"/>
+    <xacro:property name="camera_height" value="0.025"/>
+    <xacro:property name="camera_mass" value="0.02"/>
 
+    <!-- from cad / blender -->
     <xacro:property name="battery_width" value="0.041"/>
     <xacro:property name="battery_length" value="0.071"/>
     <xacro:property name="battery_height" value="0.022"/>
-    <xacro:property name="battery_x" value="0.012"/>
+    <xacro:property name="battery_x" value="0.016"/>
     <xacro:property name="battery_y" value="0.0"/>
     <xacro:property name="battery_z" value="${-0.004 - (battery_height/2)}"/>
-    <xacro:property name="battery_weight" value="0.0"/>
+    <xacro:property name="battery_mass" value="0.150"/>
 
+    <!-- from cad / blender -->
     <xacro:property name="pi_width" value="0.056"/>
     <xacro:property name="pi_length" value="0.087"/>
     <xacro:property name="pi_height" value="0.020"/>
-    <xacro:property name="pi_x" value="24.74"/>
-    <xacro:property name="pi_y" value="24.74"/>
-    <xacro:property name="pi_z" value="24.74"/>
-    <xacro:property name="pi_weight" value="0.0"/>
+    <xacro:property name="pi_x" value="0.016"/>
+    <xacro:property name="pi_y" value="0.0"/>
+    <xacro:property name="pi_z" value="${+0.004 + pi_height/2}"/>
+    <xacro:property name="pi_mass" value="0.100"/>
+
+    <!-- from blender  -->
+    <xacro:property name="engine_width" value="0.024"/>
+    <xacro:property name="engine_length" value="0.0715"/>
+    <xacro:property name="engine_height" value="0.024"/>
+    <xacro:property name="engine_x" value="-0.056"/>
+    <xacro:property name="engine_y" value="0.032"/>
+    <xacro:property name="engine_z" value="${-0.004 - engine_height/2}"/>
+    <xacro:property name="engine_mass" value="0.045"/>
 
 
     
