@@ -57,7 +57,7 @@ class RequestHandler : public rclcpp::Waitable {
     std::unique_ptr<CameraControlsHandler> controls_handler;
     FramePublishedCallback callback;
 
-    std::atomic<size_t> waiting_requests;
+    std::atomic<size_t> waiting_requests = 0;
 };
 
 } // namespace tuw_libcamera
