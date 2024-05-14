@@ -13,7 +13,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <box size="${camera_width} ${camera_length} ${camera_height}"/>
+                <box size="${camera_length} ${camera_width} ${camera_height}"/>
             </geometry>
             <material name="green"/>
         </visual>

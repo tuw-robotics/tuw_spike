@@ -13,7 +13,19 @@
     <!-- include wheels -->
     <xacro:include filename="wheels.xacro"/>
 
+    <!-- include pi -->
+    <xacro:include filename="pi.xacro"/>
+
+    <!-- include battery -->
+    <xacro:include filename="battery.xacro"/>
+
+    <!-- include engines -->
+    <xacro:include filename="engine.xacro"/>
+
+    <!-- include camera -->
     <xacro:include filename="camera.xacro"/>
+
+    <xacro:include filename="ray_frame.xacro"/>
 
 
 </robot>
