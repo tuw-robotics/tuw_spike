@@ -118,6 +118,11 @@ class ProjLine2d : public cv::Vec3d {
     [[nodiscard]] cv::Vec2d direction() const {
         return cv::normalize(cv::Vec2d((*this)(1), -(*this)(0)));
     }
+
+    double distance(const ProjPoint2d &point) {
+        double a = (*this)(0), b = (*this)(1);
+        return abs(dot(point) / point(2)) / sqrt(a*a + b*b);
+    }
 };
 
 std::optional<std::pair<cv::Vec2d, cv::Vec2d>> inline ray_clip(
