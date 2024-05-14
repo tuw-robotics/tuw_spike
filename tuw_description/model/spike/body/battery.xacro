@@ -1,26 +1,32 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-        
-        <link name="battery">
-    
-            <visual>
-                <origin xyz="${battery_x} ${battery_y} ${battery_z}" rpy="0 0 0" />
-                <geometry>
-                    <box size="${battery_length} ${battery_width} ${battery_height}" />
-                </geometry>
-                <material name="orange" />
-            </visual>
-    
-            <inertial>
-                <origin xyz="${battery_x} ${battery_y} ${battery_z}" rpy="0 0 0" />
-                <mass value="${battery_mass}" />
-                <!-- intertia for a box -->
-                <inertia
-                    ixx="${battery_mass / 12.0 * (battery_length*battery_length + battery_height*battery_height)}"
-                    iyy="${battery_mass / 12.0 * (battery_height*battery_height + battery_width*battery_width)}"
-                    izz="${battery_mass / 12.0 * (battery_width*battery_width + battery_length*battery_length)}"
-                    ixy="0.0" ixz="0.0" iyz="0.0" />
-            </inertial>
-        </link>
+
+    <joint name="battery_joint" type="fixed">
+        <origin 
+            xyz="${battery_x} ${battery_y} ${battery_z}" 
+            rpy="0 0 0"/>
+        <parent link="base_link"/>
+        <child link="battery"/>
+    </joint>
+
+    <link name="battery">
+        <visual name="battery_visual">
+            <origin xyz="0 0 0" rpy="0 0 ${pi/2}" />
+            <geometry>
+                <box size="${battery_length} ${battery_width} ${battery_height}" />
+            </geometry>
+            <material name="black" />
+        </visual>
+
+        <inertial name="battery_inertia">
+            <origin xyz="0 0 0" rpy="0 0 ${pi/2}" />
+            <mass value="${battery_mass}" />
+            <inertia
+                ixx="${battery_mass / 12.0 * (battery_length*battery_length + battery_height*battery_height)}"
+                iyy="${battery_mass / 12.0 * (battery_height*battery_height + battery_width*battery_width)}"
+                izz="${battery_mass / 12.0 * (battery_width*battery_width + battery_length*battery_length)}"
+                ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
+    </link>
 
 </robot>

@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:macro name="engine_inertia" params="y_reflect prefix">
+        <joint name="engine_joint_${prefix}" type="fixed">
+            <origin 
+                xyz="${engine_x} ${engine_y*y_reflect} ${engine_z}" 
+                rpy="0 0 0"/>
+            <parent link="base_link"/>
+            <child link="engine_${prefix}"/>
+        </joint>
+
+        <link name="engine_${prefix}">  
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${engine_length} ${engine_width} ${engine_height}" />
+                </geometry>
+                <material name="black" />
+            </visual>
+            
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <mass value="${engine_mass}" />
+                <inertia
+                    ixx="${engine_mass / 12.0 * (engine_length*engine_length + engine_height*engine_height)}"
+                    iyy="${engine_mass / 12.0 * (engine_height*engine_height + engine_width*engine_width)}"
+                    izz="${engine_mass / 12.0 * (engine_width*engine_width + engine_length*engine_length)}"
+                    ixy="0.0" ixz="0.0" iyz="0.0" />
+            </inertial>
+        </link>
+    </xacro:macro>
+
+    <xacro:engine_inertia y_reflect="1" prefix="left"/>
+    <xacro:engine_inertia y_reflect="-1" prefix="right"/>
+
+</robot>

@@ -36,21 +36,13 @@
                     izz="${wheel_mass / 2.0 * wheel_radius*wheel_radius}"
                     ixy="0.0" ixz="0.0" iyz="0.0" />
             </inertial>
-
-            <gazebo reference="${prefix}_wheel">
-                <mu1 value="10.0"/>
-                <mu2 value="10.0"/>
-                <kp value="10000000.0"/>
-                <kd value="1.0"/>
-                <fdir1 value="1 1 0"/>
-            </gazebo>
         </link>
     </xacro:macro>
 
     <xacro:wheel prefix="left" y_reflect="1" />
     <xacro:wheel prefix="right" y_reflect="-1" />
 
-    <joint name="caster_joint_gz" type="continuous">
+    <joint name="caster_joint_gz" type="fixed">
         <parent link="base_link"/>
         <child link="front_caster_gz"/>
         <origin xyz="${caster_x} ${caster_y} ${caster_z}" rpy="0 0 0"/>
@@ -79,15 +71,15 @@
                 izz="${2/5 * caster_mass * caster_radius*caster_radius}"
                 ixy="0.0" ixz="0.0" iyz="0.0" />
         </inertial>
-
-        <gazebo reference="front_caster_gz">
-            <mu1 value="0.0"/>
-            <mu2 value="0.0"/>
-            <kp value="10000000.0"/>
-            <kd value="1.0"/>
-            <fdir1 value="1 0 0"/>
-        </gazebo>
     </link>
+
+    <gazebo reference="front_caster_gz">
+        <mu1 value="0.0"/>
+        <mu2 value="0.0"/>
+        <kp value="10000000.0"/>
+        <kd value="1.0"/>
+        <fdir1 value="1 0 0"/>
+    </gazebo>
 
 
 

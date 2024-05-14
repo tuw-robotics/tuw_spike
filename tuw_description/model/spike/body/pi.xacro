@@ -1,26 +1,32 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-        
-        <link name="pi">
-    
-            <visual>
-                <origin xyz="${pi_x} ${pi_y} ${pi_z}" rpy="0 0 0" />
-                <geometry>
-                    <box size="${pi_length} ${pi_width} ${pi_height}" />
-                </geometry>
-                <material name="orange" />
-            </visual>
-    
-            <inertial>
-                <origin xyz="${pi_x} ${pi_y} ${pi_z}" rpy="0 0 0" />
-                <mass value="${pi_mass}" />
-                <!-- intertia for a box -->
-                <inertia
-                    ixx="${pi_mass / 12.0 * (pi_length*pi_length + pi_height*pi_height)}"
-                    iyy="${pi_mass / 12.0 * (pi_height*pi_height + pi_width*pi_width)}"
-                    izz="${pi_mass / 12.0 * (pi_width*pi_width + pi_length*pi_length)}"
-                    ixy="0.0" ixz="0.0" iyz="0.0" />
-            </inertial>
-        </link>
+
+    <joint name="pi_joint" type="fixed">
+        <origin 
+            xyz="${pi_x} ${pi_y} ${pi_z}" 
+            rpy="0 0 0"/>
+        <parent link="base_link"/>
+        <child link="pi"/>
+    </joint>
+
+    <link name="pi">
+        <visual name="pi_visual">
+            <origin xyz="0 0 0" rpy="0 0 ${pi/2}" />
+            <geometry>
+                <box size="${pi_length} ${pi_width} ${pi_height}" />
+            </geometry>
+            <material name="black" />
+        </visual>
+
+        <inertial name="pi_inertia">
+            <origin xyz="0 0 0" rpy="0 0 ${pi/2}" />
+            <mass value="${pi_mass}" />
+            <inertia
+                ixx="${pi_mass / 12.0 * (pi_length*pi_length + pi_height*pi_height)}"
+                iyy="${pi_mass / 12.0 * (pi_height*pi_height + pi_width*pi_width)}"
+                izz="${pi_mass / 12.0 * (pi_width*pi_width + pi_length*pi_length)}"
+                ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
+    </link>
 
 </robot>
