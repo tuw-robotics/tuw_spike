@@ -27,6 +27,16 @@
             <!-- output --> 
             <odom_topic>${namespace}/odom</odom_topic>
             <topic>${namespace}/cmd_vel</topic>
+
+            <!-- limits -->
+            <min_linear_velocity>-0.95</min_linear_velocity>
+            <max_linear_velocity>0.95</max_linear_velocity>
+            <min_angular_velocity>-10.0</min_angular_velocity>
+            <max_angular_velocity>10.0</max_angular_velocity>
+            <min_linear_acceleration>-5.0</min_linear_acceleration>
+            <max_linear_acceleration>3.0</max_linear_acceleration>
+            <min_angular_acceleration>-50.0</min_angular_acceleration>
+            <max_angular_acceleration>50.0</max_angular_acceleration>
         </plugin>
     </gazebo>
 </robot>
