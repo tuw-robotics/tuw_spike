@@ -62,7 +62,7 @@ install(
 )
 
 install(
-  DIRECTORY launch calibration
+  DIRECTORY launch calibration config maps
   DESTINATION share/${PROJECT_NAME}
 )
 

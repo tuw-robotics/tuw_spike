@@ -1,9 +1,9 @@
-from launch_ros.actions import LoadComposableNodes, PushRosNamespace
+from launch_ros.actions import LoadComposableNodes, PushRosNamespace, SetParameter
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, GroupAction
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, OrSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 
@@ -61,11 +61,21 @@ def generate_launch_description():
         }]
     )
 
+    # AMCL
+    amcl_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "amcl.launch.py"]))
+    )
+
     return LaunchDescription([
         # Arguments
         DeclareLaunchArgument("debug", default_value="False"),
+        DeclareLaunchArgument("replay", default_value="False"),
         DeclareLaunchArgument("simulation", default_value="False"),
         DeclareLaunchArgument("model_name", default_value="robot0"),
+        SetParameter(name="use_sim_time", value=OrSubstitution(
+            simulation,
+            LaunchConfiguration("replay")
+        )),
         # Global Namespace
         simulation_world_launch,
         TimerAction(period=5.0, actions=[simulation_spawn_launch]),
@@ -81,5 +91,6 @@ def generate_launch_description():
                 ],
                 composable_node_descriptions=[localizer_comp]
             ),
+            amcl_launch
         ])
     ])

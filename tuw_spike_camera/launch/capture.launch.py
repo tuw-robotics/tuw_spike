@@ -59,7 +59,7 @@ def generate_launch_description():
 
     replay = ExecuteProcess(
         cmd=[
-            'ros2', 'bag', 'play', '--loop',
+            'ros2', 'bag', 'play', '--clock', '--loop',
             'bags/camera',
             '--remap',
             ['/camera/image:=', LaunchConfiguration("ros_namespace"), '/camera/image'],

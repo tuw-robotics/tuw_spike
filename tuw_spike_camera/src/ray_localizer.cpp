@@ -238,7 +238,7 @@ RayLocalizer::detect_edge(ProcessingState &state, cv::Point start,
                 if (params.edge_min_width <= edge_width &&
                     (params.edge_max_width < 0 ||
                      edge_width < params.edge_max_width)) {
-                    RCLCPP_INFO(
+                    RCLCPP_DEBUG(
                         logger,
                         "Detected edge with w1 = %.1fmm w2 = %.1fmm",
                         w1*1e3, w2*1e3
