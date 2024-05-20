@@ -31,6 +31,7 @@ struct RayLocalizer::ProcessingState {
     cv::Matx33d debug_transform;
     cv::Rect2d viewport;
     ProjPoint2d ray_center;
+    std::optional<std::pair<ProjPoint2d, ProjPoint2d>> prev_ray;
 };
 
 RayLocalizer::RayLocalizer(const rclcpp::Logger &logger,
@@ -60,7 +61,7 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     // Get image viewport
     int width = img->image.cols;
     int height = img->image.rows;
-    state.viewport = {0.5, 0.5, (double)(width - 1), (double)(height - 1)};
+    state.viewport = {0.0, 0.0, (double)(width - 1), (double)(height - 1)};
 
     // Retrieve ray plane -> image plane homography
     auto homography = get_homography(info);
@@ -168,7 +169,7 @@ std::optional<cv::Matx33d> RayLocalizer::get_homography(
     return homography;
 }
 
-float RayLocalizer::ray_cast(const ProcessingState &state, double angle) const {
+float RayLocalizer::ray_cast(ProcessingState &state, double angle) const {
     // Homography H transforms points from ray plane -> image plane
     // H^(-T) transforms lines from ray plane -> image plane
     ProjLine2d line = ProjLine2d({0, 0}, angle);
@@ -187,13 +188,8 @@ float RayLocalizer::ray_cast(const ProcessingState &state, double angle) const {
 
         auto edge = detect_edge(state, ray_start, ray_end);
         if (edge) {
-            auto [pt, gradient] = *edge;
-
-            // Transform detected point back to ray plane
-            ProjPoint2d ray_point =
-                state.inv_homography * ProjPoint2d(pt.x, pt.y);
             // Get distance to origin
-            double distance = cv::norm(static_cast<cv::Point2d>(ray_point));
+            double distance = cv::norm(static_cast<cv::Point2d>(*edge));
             return (float)distance;
         }
     }
@@ -201,81 +197,63 @@ float RayLocalizer::ray_cast(const ProcessingState &state, double angle) const {
     return std::numeric_limits<float>::infinity();
 }
 
-std::optional<std::pair<cv::Point, cv::Vec2d>>
-RayLocalizer::detect_edge(const ProcessingState &state, cv::Point start,
+std::optional<ProjPoint2d>
+RayLocalizer::detect_edge(ProcessingState &state, cv::Point start,
                           cv::Point end) const {
+    std::optional<ProjPoint2d> detected;
+
     // Convolve filter kernel along ray
     FilterLineIterator<uint8_t, int16_t> line{state.image, std::move(start),
                                               std::move(end), KERNEL};
 
     // Line entry point
-    std::optional<std::pair<cv::Point, cv::Vec2d>> entry;
+    std::optional<cv::Point> entry;
 
     while (++line) {
         auto [pos, filter_value] = *line;
 
         if (!entry && -filter_value > params.edge_enter_threshold) {
             // Record entry point
-            entry.emplace(pos, get_gradient(state.image, pos));
+            entry = pos;
         } else if (entry && filter_value > params.edge_exit_threshold) {
-            auto [pos_enter, grad_enter] = *entry;
-            auto pos_exit = pos;
-            auto grad_exit = get_gradient(state.image, pos);
+            debug_point(state, {0, 255, 0}, *entry);
+            debug_point(state, {0, 0, 255}, pos);
 
-            debug_point(state, {0, 255, 0}, pos_enter);
-            debug_point(state, {0, 0, 255}, pos_exit);
-            debug_vector(state, {0, 255, 255}, pos_enter,
-                         cv::normalize(grad_enter) * 30);
-            debug_vector(state, {0, 255, 255}, pos_exit,
-                         cv::normalize(grad_exit) * 30);
+            ProjPoint2d pos_entry =
+                state.inv_homography * ProjPoint2d(*entry);
+            ProjPoint2d pos_exit =
+                state.inv_homography * ProjPoint2d(pos);
+            if (state.prev_ray) {
+                auto [last_entry, last_exit] = *state.prev_ray;
+                ProjLine2d entry_line = pos_entry.cross(last_entry);
+                //ProjLine2d exit_line = pos_exit.cross(last_exit);
+                double w1 = entry_line.distance(pos_exit);
+                double w2 = entry_line.distance(last_exit);
+                double edge_width = (w1 + w2) * 0.5;
 
-            ProjLine2d line_enter =
-                state.homography.t() * ProjLine2d(pos_enter, grad_enter);
-            ProjLine2d line_exit =
-                state.homography.t() * ProjLine2d(pos_exit, grad_exit);
-            auto dir_enter = line_enter.direction();
-            auto dir_exit = line_exit.direction();
 
-            double cos_angle = abs(dir_enter.dot(dir_exit));
-            if (cos_angle > params.edge_normal_alignment_threshold) {
-                debug_line(state, {255, 0, 255}, pos_enter, pos_exit);
-
-                // Assuming the directions almost match (but are opposite), this
-                // is a close enough approximation of the angle bisector between
-                // the directions
-                auto normal_dir = cv::normalize(dir_exit - dir_enter);
-
-                // Project detected length onto normal direction
-                ProjPoint2d proj_pos_enter =
-                    state.inv_homography * ProjPoint2d(pos_enter);
-                ProjPoint2d proj_pos_exit =
-                    state.inv_homography * ProjPoint2d(pos_exit);
-                auto measured =
-                    cv::Point2d(proj_pos_enter) - cv::Point2d(proj_pos_exit);
-
-                auto edge_width = abs(measured.dot(normal_dir));
+                ProjLine2d dbg_line = state.inv_homography.t() * entry_line;
+                debug_vector(state, {0, 255, 0}, *entry, dbg_line.direction() * 20);
 
                 if (params.edge_min_width <= edge_width &&
                     (params.edge_max_width < 0 ||
                      edge_width < params.edge_max_width)) {
                     RCLCPP_INFO(
                         logger,
-                        "Detected edge with width %.1fmm (measured: %.1fmm) "
-                        "Normal (%.2f) Ray (%.2f)",
-                        edge_width * 1e3, cv::norm(measured) * 1e3,
-                        atan2(normal_dir[1], normal_dir[0]) * 180.0 / M_PI,
-                        atan2(measured.y, measured.x) * 180.0 / M_PI);
-                    return *entry;
+                        "Detected edge with w1 = %.1fmm w2 = %.1fmm",
+                        w1*1e3, w2*1e3
+                    );
+                    debug_line(state, {255, 255, 0}, *entry, pos);
+                    detected = pos_entry;
                 }
-
-                return *entry;
             }
 
-            entry = std::nullopt;
+            state.prev_ray.emplace(pos_entry, pos_exit);
+            break;
         }
     }
 
-    return std::nullopt;
+    return detected;
 }
 
 cv::Vec2d RayLocalizer::get_gradient(const cv::Mat &image,

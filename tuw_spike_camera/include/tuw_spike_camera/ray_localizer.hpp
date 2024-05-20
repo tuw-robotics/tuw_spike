@@ -44,11 +44,11 @@ class RayLocalizer {
     get_homography(const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info);
     void setup_debug_image(ProcessingState &state) const;
 
-    [[nodiscard]] float ray_cast(const ProcessingState &state,
+    [[nodiscard]] float ray_cast(ProcessingState &state,
                                  double angle) const;
 
-    [[nodiscard]] std::optional<std::pair<cv::Point, cv::Vec2d>>
-    detect_edge(const ProcessingState &state, cv::Point start,
+    [[nodiscard]] std::optional<ProjPoint2d>
+    detect_edge(ProcessingState &state, cv::Point start,
                 cv::Point end) const;
 
     [[nodiscard]] cv::Vec2d get_gradient(const cv::Mat &image,
@@ -60,6 +60,8 @@ class RayLocalizer {
     static void debug_line(const ProcessingState &state,
                            const cv::Scalar &color, const cv::Point2d &start,
                            const cv::Point2d &end);
+    static void debug_proj_line(const ProcessingState &state,
+                           const cv::Scalar &color, const ProjLine2d &line);
     static void debug_vector(const ProcessingState &state,
                              const cv::Scalar &color, const cv::Point2d &origin,
                              const cv::Vec2d &vector);
