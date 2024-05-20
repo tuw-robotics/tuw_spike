@@ -10,7 +10,9 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 def generate_launch_description():
     tuw_spike_camera = FindPackageShare("tuw_spike_camera")
 
-    container = "camera_processing_container"
+    container = [
+        LaunchConfiguration("ros_namespace"), "/camera_processing_container"
+    ]
     container_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "container.launch.py"]))
     )
@@ -56,7 +58,13 @@ def generate_launch_description():
     )
 
     replay = ExecuteProcess(
-        cmd=['ros2', 'bag', 'play', '--loop', 'bags/camera'],
+        cmd=[
+            'ros2', 'bag', 'play', '--loop',
+            'bags/camera',
+            '--remap',
+            ['/camera/image:=', LaunchConfiguration("ros_namespace"), '/camera/image'],
+            ['/camera/camera_info:=', LaunchConfiguration("ros_namespace"), '/camera/camera_info']
+        ],
         name='rosbag',
         output='both',
         condition=IfCondition(LaunchConfiguration('replay'))

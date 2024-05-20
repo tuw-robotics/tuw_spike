@@ -47,7 +47,7 @@ class RayLocalizerNode : public rclcpp::Node {
             "laser_scan", rclcpp::SensorDataQoS());
 
         camera_sub = image_transport::create_camera_subscription(
-            this, "image_rect",
+            this, "camera/image_rect",
             [laser_scan_pub, ray_localizer](auto &img, auto &info) {
                 auto scan = ray_localizer->process_frame(img, info);
                 if (scan) {

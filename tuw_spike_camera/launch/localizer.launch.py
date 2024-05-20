@@ -1,32 +1,58 @@
-from launch_ros.actions import LoadComposableNodes
+from launch_ros.actions import LoadComposableNodes, PushRosNamespace
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.substitutions import PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, GroupAction
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.conditions import IfCondition, UnlessCondition
 
 def generate_launch_description():
     tuw_spike_camera = FindPackageShare("tuw_spike_camera")
     tuw_spike_description = FindPackageShare("tuw_description")
+    tuw_simulation = FindPackageShare("tuw_simulation")
+    simulation = LaunchConfiguration("simulation")
 
+    container = "camera_processing_container"
+
+    # Simulation
+    simulation_world_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution(
+            [tuw_simulation, "launch", "world.launch.py"]
+        )),
+        condition=IfCondition(simulation)
+    )
+    simulation_spawn_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution(
+            [tuw_simulation, "launch", "spawn_robot.launch.py"]
+        )),
+        condition=IfCondition(simulation)
+    )
+    container_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "container.launch.py"])),
+        condition=IfCondition(simulation)
+    )
+
+    # Real capture
     capture_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
             [tuw_spike_camera, "launch", "capture.launch.py"]
-        ))
+        )),
+        condition=UnlessCondition(simulation)
     )
 
     robot_state_pub_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
             [tuw_spike_description, "launch", "spike_description.launch.py"]
-        ))
+        )),
+        condition=UnlessCondition(simulation)
     )
 
+    # Localizer
     localizer_comp = ComposableNode(
         package='tuw_spike_camera',
         plugin='tuw_spike_camera::RayLocalizerNode',
         extra_arguments=[{'use_intra_process_comms': True}],
-        namespace="camera",
         parameters=[{
             'ray_frame': 'ray_origin',
             'num_rays': 50,
@@ -36,13 +62,24 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument("replay", default_value="False"),
+        # Arguments
         DeclareLaunchArgument("debug", default_value="False"),
-        DeclareLaunchArgument('model_name',  default_value="robot0"),
-        capture_launch,
+        DeclareLaunchArgument("simulation", default_value="False"),
+        DeclareLaunchArgument("model_name", default_value="robot0"),
+        # Global Namespace
+        simulation_world_launch,
+        TimerAction(period=5.0, actions=[simulation_spawn_launch]),
         robot_state_pub_launch,
-        LoadComposableNodes(
-            target_container='camera_processing_container',
-            composable_node_descriptions=[localizer_comp]
-        )
+        # Robot Namespace
+        GroupAction([
+            PushRosNamespace(LaunchConfiguration("model_name")),
+            container_launch,
+            capture_launch,
+            LoadComposableNodes(
+                target_container=[
+                    LaunchConfiguration("ros_namespace"), "/camera_processing_container"
+                ],
+                composable_node_descriptions=[localizer_comp]
+            ),
+        ])
     ])
