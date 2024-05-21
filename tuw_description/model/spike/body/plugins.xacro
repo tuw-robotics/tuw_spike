@@ -27,6 +27,7 @@
             <!-- output --> 
             <odom_topic>${namespace}/odom</odom_topic>
             <topic>${namespace}/cmd_vel</topic>
+            <tf_topic>${namespace}/tf</tf_topic>
 
             <!-- limits -->
             <min_linear_velocity>-0.95</min_linear_velocity>

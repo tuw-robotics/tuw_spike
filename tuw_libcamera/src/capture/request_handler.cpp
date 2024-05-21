@@ -15,7 +15,8 @@ RequestHandler::RequestContext::RequestContext(
 RequestHandler::RequestHandler(rclcpp::Node *node,
                                std::shared_ptr<libcamera::Camera> camera,
                                size_t num_requests, std::string frame_id)
-    : logger(node->get_logger()), clock(node->get_clock()), camera(camera), frame_id(frame_id) {
+    : logger(node->get_logger()), clock(node->get_clock()), camera(camera),
+      frame_id(frame_id) {
     static_assert(std::numeric_limits<size_t>::max() <=
                   std::numeric_limits<uint64_t>::max());
 
@@ -84,6 +85,8 @@ void RequestHandler::handle(libcamera::Request *request) {
 
 void RequestHandler::execute(std::shared_ptr<void> &data) {
     (void)data;
+    RCLCPP_DEBUG(logger, "Execute begin: waiting = %ld",
+                 waiting_requests.load());
     for (auto &ctx : request_ctx) {
         if (ctx.waiting) {
             waiting_requests--;
@@ -104,6 +107,9 @@ void RequestHandler::execute(std::shared_ptr<void> &data) {
                     ->publish_buffer(ctx, header);
             }
 
+            RCLCPP_DEBUG_STREAM(logger, "Published completed request "
+                                            << ctx.request->cookie());
+
             if (callback) {
                 callback(ctx.stamp);
             }
@@ -115,6 +121,7 @@ void RequestHandler::execute(std::shared_ptr<void> &data) {
             camera->queueRequest(ctx.request.get());
         }
     }
+    RCLCPP_DEBUG(logger, "Execute end: waiting = %ld", waiting_requests.load());
 }
 
 void RequestHandler::add_to_wait_set(rcl_wait_set_t *wait_set) {
@@ -123,6 +130,7 @@ void RequestHandler::add_to_wait_set(rcl_wait_set_t *wait_set) {
 
 bool RequestHandler::is_ready(rcl_wait_set_t *wait_set) {
     (void)wait_set;
+    RCLCPP_DEBUG(logger, "is_ready: waiting = %ld", waiting_requests.load());
     return waiting_requests > 0;
 }
 
