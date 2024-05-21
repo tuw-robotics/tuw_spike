@@ -10,15 +10,7 @@
             <child link="engine_${prefix}"/>
         </joint>
 
-        <link name="engine_${prefix}">  
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0 0" />
-                <geometry>
-                    <box size="${engine_length} ${engine_width} ${engine_height}" />
-                </geometry>
-                <material name="black" />
-            </visual>
-            
+        <link name="engine_${prefix}">              
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <mass value="${engine_mass}" />
