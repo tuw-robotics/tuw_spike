@@ -40,8 +40,6 @@ int main(int argc, char *argv[]) {
 
     ignition::msgs::Entity test;
 
-    
-
     gz::transport::Node node_ign;
     ignition::msgs::Scene res;
     ignition::msgs::Empty req;
@@ -52,7 +50,7 @@ int main(int argc, char *argv[]) {
         if (result) {
             for (int i = 0; i < res.model_size(); i++) {
                 auto tmp = res.model(i).name();
-                RCLCPP_INFO(node->get_logger(), "%s", tmp.c_str());
+                //RCLCPP_INFO(node->get_logger(), "%s", tmp.c_str());
                 if (name.compare(tmp) == 0) {
                     RCLCPP_INFO(node->get_logger(), "model already exists");
                     exists = true;
@@ -60,15 +58,15 @@ int main(int argc, char *argv[]) {
                 }
             }
         } else {
-            std::cerr << "Service call failed" << std::endl;
+            std::cerr << "scene info service call failed" << std::endl;
             success = false;
         }
     } else {
-        std::cerr << "Service call timed out" << std::endl;
+        std::cerr << "scene info service call timed out" << std::endl;
         success = false;
     }
     
-    if (!exists) {
+    if (!exists && success) {
         ignition::msgs::EntityFactory req_c;
         ignition::msgs::Boolean res_c;
         req_c.set_sdf(argv[1]);
@@ -79,15 +77,16 @@ int main(int argc, char *argv[]) {
         bool executed =
             node_ign.Request("/world/plain_world/create", req_c, 1000, res_c, result);
         if (executed) {
-            if (result)
+            if (result) {
                 std::cerr << "Entity was created : [" << res_c.data() << "]"
                         << std::endl;
-            else {
-                std::cerr << "Service call failed" << std::endl;
+                success = true;
+            } else {
+                std::cerr << "create service call failed" << std::endl;
                 success = false;
             }
         } else {
-                std::cerr << "Service call timed out" << std::endl;
+                std::cerr << "create service call timed out" << std::endl;
                 success = false;
             }
     }
