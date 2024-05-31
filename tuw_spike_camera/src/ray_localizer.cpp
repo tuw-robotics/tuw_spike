@@ -85,6 +85,10 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
 
     double start_angle = atan2(start_pt.y(), start_pt.x());
     double end_angle = atan2(end_pt.y(), end_pt.x());
+    if (start_angle > end_angle) {
+        std::swap(start_angle, end_angle);
+    }
+    
     double angle_increment =
         (end_angle - start_angle) / (double)(params.num_rays - 1);
 

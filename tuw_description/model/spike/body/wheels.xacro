@@ -37,6 +37,14 @@
                     ixy="0.0" ixz="0.0" iyz="0.0" />
             </inertial>
         </link>
+
+        <gazebo reference="${prefix}_wheel">
+            <mu1 value="1.0"/>
+            <mu2 value="1.0"/>
+            <kp value="10000000.0"/>
+            <kd value="1.0"/>
+            <fdir1 value="1 0 0"/>
+        </gazebo>
     </xacro:macro>
 
     <xacro:wheel prefix="left" y_reflect="1" />

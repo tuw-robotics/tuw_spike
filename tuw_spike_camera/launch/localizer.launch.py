@@ -55,9 +55,9 @@ def generate_launch_description():
         extra_arguments=[{'use_intra_process_comms': True}],
         parameters=[{
             'ray_frame': 'ray_origin',
-            'num_rays': 50,
+            'num_rays': 200,
             'debug_img_size': 1280,
-            'debug_real_size': 0.4
+            'debug_real_size': 0.6
         }]
     )
 

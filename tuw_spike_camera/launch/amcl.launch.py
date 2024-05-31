@@ -28,7 +28,8 @@ def generate_launch_description():
         executable='amcl',
         name='amcl',
         output='screen',
-        parameters=[params_yaml]
+        parameters=[params_yaml],
+        ros_arguments=["--log-level", "robot0.amcl:=debug"]
     )
 
     lifecycle_manager = Node(
