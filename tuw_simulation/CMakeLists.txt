@@ -43,6 +43,7 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/spawn_robot.py
+  scripts/record_bag.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

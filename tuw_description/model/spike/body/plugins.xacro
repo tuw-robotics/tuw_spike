@@ -14,7 +14,7 @@
             <left_joint>left_wheel_joint</left_joint>
             <right_joint>right_wheel_joint</right_joint>
             
-
+            
 
             <wheel_separation>${base_width}</wheel_separation>
             <wheel_radius>${wheel_radius}</wheel_radius>
