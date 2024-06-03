@@ -14,13 +14,12 @@
             <left_joint>left_wheel_joint</left_joint>
             <right_joint>right_wheel_joint</right_joint>
             
-            
 
-            <wheel_separation>${base_width}</wheel_separation>
+            <wheel_separation>${2 * wheel_y + wheel_len}</wheel_separation>
             <wheel_radius>${wheel_radius}</wheel_radius>
 
             <frame_id>odom</frame_id>
-            <child_frame_id>base_link</child_frame_id>
+            <child_frame_id>base_odom</child_frame_id>
             
             <odom_publish_frequency>10</odom_publish_frequency>
 
