@@ -1,4 +1,4 @@
-from launch_ros.actions import LoadComposableNodes, PushRosNamespace, SetParameter
+from launch_ros.actions import LoadComposableNodes, PushRosNamespace, SetParameter, Node
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
@@ -66,6 +66,12 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "amcl.launch.py"]))
     )
 
+    # Trajectory Driver
+    trajectory_driver = Node(
+        package="tuw_spike_camera",
+        executable="test_trajectory_driver"
+    )
+
     return LaunchDescription([
         # Arguments
         DeclareLaunchArgument("debug", default_value="False"),
@@ -91,6 +97,7 @@ def generate_launch_description():
                 ],
                 composable_node_descriptions=[localizer_comp]
             ),
-            amcl_launch
+            amcl_launch,
+            trajectory_driver
         ])
     ])
