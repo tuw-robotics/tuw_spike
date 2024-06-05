@@ -20,8 +20,7 @@ namespace tuw_spike_camera {
 static constexpr auto KERNEL_DIFF = std::to_array<int16_t>({1, 0, -1});
 static constexpr auto KERNEL_GAUSS = gaussian<int16_t, 5>(100, 0.8);
 
-// static constexpr auto KERNEL = convolve(KERNEL_DIFF, KERNEL_GAUSS);
-static constexpr auto KERNEL = KERNEL_DIFF;
+static constexpr auto KERNEL = convolve(KERNEL_DIFF, KERNEL_GAUSS);
 
 struct RayLocalizer::ProcessingState {
     cv::Mat image;
@@ -88,7 +87,7 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     if (start_angle > end_angle) {
         std::swap(start_angle, end_angle);
     }
-    
+
     double angle_increment =
         (end_angle - start_angle) / (double)(params.num_rays - 1);
 
@@ -201,9 +200,9 @@ float RayLocalizer::ray_cast(ProcessingState &state, double angle) const {
     return std::numeric_limits<float>::infinity();
 }
 
-std::optional<ProjPoint2d>
-RayLocalizer::detect_edge(ProcessingState &state, cv::Point start,
-                          cv::Point end) const {
+std::optional<ProjPoint2d> RayLocalizer::detect_edge(ProcessingState &state,
+                                                     cv::Point start,
+                                                     cv::Point end) const {
     std::optional<ProjPoint2d> detected;
 
     // Convolve filter kernel along ray
@@ -223,30 +222,26 @@ RayLocalizer::detect_edge(ProcessingState &state, cv::Point start,
             debug_point(state, {0, 255, 0}, *entry);
             debug_point(state, {0, 0, 255}, pos);
 
-            ProjPoint2d pos_entry =
-                state.inv_homography * ProjPoint2d(*entry);
-            ProjPoint2d pos_exit =
-                state.inv_homography * ProjPoint2d(pos);
+            ProjPoint2d pos_entry = state.inv_homography * ProjPoint2d(*entry);
+            ProjPoint2d pos_exit = state.inv_homography * ProjPoint2d(pos);
             if (state.prev_ray) {
                 auto [last_entry, last_exit] = *state.prev_ray;
                 ProjLine2d entry_line = pos_entry.cross(last_entry);
-                //ProjLine2d exit_line = pos_exit.cross(last_exit);
+                // ProjLine2d exit_line = pos_exit.cross(last_exit);
                 double w1 = entry_line.distance(pos_exit);
                 double w2 = entry_line.distance(last_exit);
                 double edge_width = (w1 + w2) * 0.5;
 
-
                 ProjLine2d dbg_line = state.inv_homography.t() * entry_line;
-                debug_vector(state, {0, 255, 0}, *entry, dbg_line.direction() * 20);
+                debug_vector(state, {0, 255, 0}, *entry,
+                             dbg_line.direction() * 20);
 
                 if (params.edge_min_width <= edge_width &&
                     (params.edge_max_width < 0 ||
                      edge_width < params.edge_max_width)) {
-                    RCLCPP_DEBUG(
-                        logger,
-                        "Detected edge with w1 = %.1fmm w2 = %.1fmm",
-                        w1*1e3, w2*1e3
-                    );
+                    RCLCPP_DEBUG(logger,
+                                 "Detected edge with w1 = %.1fmm w2 = %.1fmm",
+                                 w1 * 1e3, w2 * 1e3);
                     debug_line(state, {255, 255, 0}, *entry, pos);
                     detected = pos_entry;
                 }
@@ -258,21 +253,6 @@ RayLocalizer::detect_edge(ProcessingState &state, cv::Point start,
     }
 
     return detected;
-}
-
-cv::Vec2d RayLocalizer::get_gradient(const cv::Mat &image,
-                                     const cv::Point &point) const {
-
-    int kernel_size = (int)params.edge_sobel_filter_size;
-    if (params.edge_gradient_filter == "scharr") {
-        kernel_size = cv::FILTER_SCHARR;
-    }
-
-    double dx, dy;
-    cv::Mat roi(image, cv::Rect(point, cv::Size(1, 1)));
-    cv::Sobel(roi, {&dx, 1}, CV_64F, 1, 0, kernel_size);
-    cv::Sobel(roi, {&dy, 1}, CV_64F, 0, 1, kernel_size);
-    return {dx, dy};
 }
 
 void RayLocalizer::setup_debug_image(ProcessingState &state) const {

@@ -56,14 +56,6 @@ tuw_spike_camera:
       bounds<>: [ 0, 32767 ]
     }
   }
-  edge_normal_alignment_threshold: {
-    type: double,
-    description: "Threshold for detecting an edge depending on enter/exit normals, cosine of angle between normals",
-    default_value: 0.6,
-    validation: {
-      bounds<>: [ 0.0, 1.0 ]
-    }
-  }
   edge_min_width: {
     type: double,
     description: "Minimum edge width threshold",
@@ -76,20 +68,4 @@ tuw_spike_camera:
     type: double,
     description: "Maximum edge width threshold, negative to disable check",
     default_value: -1.0
-  }
-  edge_gradient_filter: {
-    type: string,
-    description: "Type of kernel applied to get gradient direction for edges",
-    default_value: "sobel",
-    validation: {
-      one_of<>: [["sobel", "scharr"]]
-    }
-  }
-  edge_sobel_filter_size: {
-    type: int,
-    description: "Size of sobel kernel applied to get gradient direction for edges",
-    default_value: 3,
-    validation: {
-      one_of<>: [[3, 5, 7, 9]]
-    }
   }

@@ -57,7 +57,11 @@ def generate_launch_description():
             'ray_frame': 'ray_origin',
             'num_rays': 200,
             'debug_img_size': 1280,
-            'debug_real_size': 0.6
+            'debug_real_size': 0.6,
+            'edge_enter_threshold': 5000,
+            'edge_exit_threshold': 5000,
+            'edge_min_width': 0.042,
+            'edge_max_width': 0.052
         }]
     )
 
