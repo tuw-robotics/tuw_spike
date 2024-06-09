@@ -1,7 +1,6 @@
 #ifndef TUW_SPIKE_CAMERA__GEOMETRY_HPP_
 #define TUW_SPIKE_CAMERA__GEOMETRY_HPP_
 
-#include <cmath>
 #include <opencv2/core.hpp>
 #include <optional>
 #include <utility>
@@ -98,7 +97,7 @@ class ProjLine2d : public cv::Vec3d {
      */
     [[nodiscard]] cv::Vec2d direction() const;
 
-    double distance(const ProjPoint2d &point);
+    [[nodiscard]] double distance(const ProjPoint2d &point) const;
 };
 
 /**

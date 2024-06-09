@@ -30,7 +30,7 @@ struct RayLocalizer::ProcessingState {
     cv::Matx33d debug_transform;
     cv::Rect2d viewport;
     ProjPoint2d ray_center;
-    std::optional<std::pair<ProjPoint2d, ProjPoint2d>> prev_ray;
+    std::vector<std::pair<ProjPoint2d, ProjPoint2d>> prev_ray;
 };
 
 RayLocalizer::RayLocalizer(const rclcpp::Logger &logger,
@@ -212,6 +212,10 @@ std::optional<ProjPoint2d> RayLocalizer::detect_edge(ProcessingState &state,
     // Line entry point
     std::optional<cv::Point> entry;
 
+    // Points
+    std::vector<std::pair<ProjPoint2d, ProjPoint2d>> point_pairs;
+    auto prev_ray_iter = state.prev_ray.cbegin();
+
     while (++line) {
         auto [pos, filter_value] = *line;
 
@@ -224,10 +228,13 @@ std::optional<ProjPoint2d> RayLocalizer::detect_edge(ProcessingState &state,
 
             ProjPoint2d pos_entry = state.inv_homography * ProjPoint2d(*entry);
             ProjPoint2d pos_exit = state.inv_homography * ProjPoint2d(pos);
-            if (state.prev_ray) {
-                auto [last_entry, last_exit] = *state.prev_ray;
+            point_pairs.push_back({pos_entry, pos_exit});
+            entry = std::nullopt;
+
+            if (prev_ray_iter != state.prev_ray.cend() && !detected) {
+                auto [last_entry, last_exit] = *prev_ray_iter;
                 ProjLine2d entry_line = pos_entry.cross(last_entry);
-                // ProjLine2d exit_line = pos_exit.cross(last_exit);
+
                 double w1 = entry_line.distance(pos_exit);
                 double w2 = entry_line.distance(last_exit);
                 double edge_width = (w1 + w2) * 0.5;
@@ -235,22 +242,26 @@ std::optional<ProjPoint2d> RayLocalizer::detect_edge(ProcessingState &state,
                 ProjLine2d dbg_line = state.inv_homography.t() * entry_line;
                 debug_vector(state, {0, 255, 0}, *entry,
                              dbg_line.direction() * 20);
+                RCLCPP_DEBUG(logger,
+                             "Detected edge with w1 = %.3fmm w2 = %.3fmm "
+                             "entry line (%.3f %.3f %.3f)"
+                             "exit (%.3f %.3f %.3f)",
+                             w1 * 1e3, w2 * 1e3, entry_line(0), entry_line(1),
+                             entry_line(2), pos_exit(0), pos_exit(1),
+                             pos_exit(2));
 
                 if (params.edge_min_width <= edge_width &&
                     (params.edge_max_width < 0 ||
                      edge_width < params.edge_max_width)) {
-                    RCLCPP_DEBUG(logger,
-                                 "Detected edge with w1 = %.1fmm w2 = %.1fmm",
-                                 w1 * 1e3, w2 * 1e3);
                     debug_line(state, {255, 255, 0}, *entry, pos);
                     detected = pos_entry;
                 }
-            }
 
-            state.prev_ray.emplace(pos_entry, pos_exit);
-            break;
+                ++prev_ray_iter;
+            }
         }
     }
+    state.prev_ray = point_pairs;
 
     return detected;
 }
