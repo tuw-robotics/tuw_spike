@@ -7,6 +7,8 @@ from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, OrSu
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 
+import socket
+
 def generate_launch_description():
     tuw_spike_camera = FindPackageShare("tuw_spike_camera")
     tuw_spike_description = FindPackageShare("tuw_description")
@@ -81,7 +83,7 @@ def generate_launch_description():
         DeclareLaunchArgument("debug", default_value="False"),
         DeclareLaunchArgument("replay", default_value="False"),
         DeclareLaunchArgument("simulation", default_value="False"),
-        DeclareLaunchArgument("model_name", default_value="robot0"),
+        DeclareLaunchArgument("model_name", default_value=socket.gethostname()),
         SetParameter(name="use_sim_time", value=OrSubstitution(
             simulation,
             LaunchConfiguration("replay")
