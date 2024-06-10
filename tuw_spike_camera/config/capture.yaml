@@ -1,0 +1,13 @@
+/**:
+  ros__parameters:
+    camera_info_name: camera
+    camera_info_url: package://tuw_spike_camera/calibration/${NAME}.yaml
+    frame_id: camera_optical
+    stream_roles: ["video"]
+    streams:
+      video:
+        format: RGB888
+        target_format: bgr8
+        width: 1280
+        height: 720
+

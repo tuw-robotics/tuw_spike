@@ -13,41 +13,38 @@ def generate_launch_description():
     container = [
         LaunchConfiguration("ros_namespace"), "/camera_processing_container"
     ]
+
     container_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "container.launch.py"]))
     )
+
+    capture_params = PathJoinSubstitution([tuw_spike_camera, "config", "capture.yaml"])
 
     capture_comp = ComposableNode(
         package='tuw_libcamera',
         plugin='tuw_libcamera::CaptureNode',
         extra_arguments=[{'use_intra_process_comms': True}],
         namespace="camera",
-        parameters=[{
-            "camera_info_name": "camera",
-            "camera_info_url": "package://tuw_spike_camera/calibration/${NAME}.yaml",
-            "frame_id": "camera_optical",
-            "stream_roles": ["video"],
-            "streams.video": {
-                "format": "RGB888",
-                "target_format": "bgr8",
-                "width": 1280,
-                "height": 720
-            }
-        }]
+        name="capture",
+        parameters=[capture_params]
     )
 
     transport_comp = ComposableNode(
         package='tuw_libcamera',
         plugin='tuw_libcamera::TransportNode',
         extra_arguments=[{'use_intra_process_comms': True}],
-        namespace="camera"
+        namespace="camera",
+        name="transport",
+        parameters=[capture_params]
     )
 
     rectify_comp = ComposableNode(
         package='image_proc',
         plugin='image_proc::RectifyNode',
         extra_arguments=[{'use_intra_process_comms': True}],
-        namespace="camera"
+        namespace="camera",
+        name="rectify",
+        parameters=[capture_params]
     )
 
     record = ExecuteProcess(
