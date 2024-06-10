@@ -2,7 +2,6 @@
 #define TUW_SPIKE_CAMERA_FILTER_KERNEL_HPP_
 
 #include <array>
-#include <span>
 #include <utility>
 
 namespace tuw_spike_camera {
@@ -25,7 +24,7 @@ convolve(const std::array<T, N1> &a, const std::array<T, N2> &b) {
 }
 
 template <int Iterations = 100>
-static constexpr double constexpr_exp(double x) {
+static constexpr double constexpr_exp(const double x) {
     if (std::is_constant_evaluated()) {
         double accum = 1;
         double result = 0;
@@ -40,20 +39,20 @@ static constexpr double constexpr_exp(double x) {
 }
 
 template <typename T, int N>
-static constexpr std::array<T, N> gaussian(T area, double sigma) {
+static constexpr std::array<T, N> gaussian(T area, const double sigma) {
     static_assert(N > 0);
-    static_assert((N % 2) == 1);
+    static_assert(N % 2 == 1);
 
     std::array<T, N> result{};
     std::array<double, N> gaussian{};
     double sum = 0.0;
     for (int i = 0; i < N; i++) {
-        auto x = (double)(i - N / 2);
+        const int x = i - N / 2;
         gaussian[i] = constexpr_exp(-0.5 * x * x / (sigma * sigma));
         sum += gaussian[i];
     }
     for (int i = 0; i < N; i++) {
-        result[i] = (T)(area * gaussian[i] / sum);
+        result[i] = static_cast<T>(area * gaussian[i] / sum);
     }
     return result;
 }
@@ -107,7 +106,9 @@ template <typename TInput, typename TFilter> class FilterLineIterator {
         return *this;
     }
 
-    explicit operator bool() const { return index <= (size_t)line.count; }
+    explicit operator bool() const {
+        return index <= static_cast<size_t>(line.count);
+    }
 
   private:
     cv::LineIterator line;

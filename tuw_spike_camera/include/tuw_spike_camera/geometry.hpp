@@ -18,12 +18,15 @@ class ProjPoint2d : public cv::Vec3d {
   public:
     // Make type interchangeable with base class
     using cv::Vec3d::Vec3d;
-    ProjPoint2d(const cv::Vec3d &vec);   // NOLINT(google-explicit-constructor)
-    ProjPoint2d(const cv::Vec3d &&vec);  // NOLINT(google-explicit-constructor)
-    ProjPoint2d(double x, double y);     // NOLINT(google-explicit-constructor)
-    ProjPoint2d(const cv::Vec2d &point); // NOLINT(google-explicit-constructor)
-    ProjPoint2d(                         // NOLINT(google-explicit-constructor)
-        const cv::Point2d &point);
+    // ReSharper disable CppNonExplicitConvertingConstructor
+    // NOLINTBEGIN(google-explicit-constructor)
+    ProjPoint2d(const cv::Vec3d &vec);
+    ProjPoint2d(const cv::Vec3d &&vec);
+    ProjPoint2d(double x, double y);
+    ProjPoint2d(const cv::Vec2d &point);
+    ProjPoint2d(const cv::Point2d &point);
+    // NOLINTEND(google-explicit-constructor)
+    // ReSharper restore CppNonExplicitConvertingConstructor
 
     /**
      * @return True, if the point is on the line at infinity
@@ -72,8 +75,12 @@ class ProjLine2d : public cv::Vec3d {
   public:
     // Make type interchangeable with base class
     using cv::Vec3d::Vec3d;
-    ProjLine2d(const cv::Vec3d &vec);  // NOLINT(google-explicit-constructor)
-    ProjLine2d(const cv::Vec3d &&vec); // NOLINT(google-explicit-constructor)
+    // ReSharper disable CppNonExplicitConvertingConstructor
+    // NOLINTBEGIN(google-explicit-constructor)
+    ProjLine2d(const cv::Vec3d &vec);
+    ProjLine2d(const cv::Vec3d &&vec);
+    // NOLINTEND(google-explicit-constructor)
+    // ReSharper restore CppNonExplicitConvertingConstructor
 
     /**
      * @brief Create a line using a point on the line and a direction vector.

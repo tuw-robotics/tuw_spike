@@ -60,7 +60,8 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     // Get image viewport
     int width = img->image.cols;
     int height = img->image.rows;
-    state.viewport = {0.0, 0.0, (double)(width - 1), (double)(height - 1)};
+    state.viewport = {0.0, 0.0, static_cast<double>(width - 1),
+                      static_cast<double>(height - 1)};
 
     // Retrieve ray plane -> image plane homography
     auto homography = get_homography(info);
@@ -89,15 +90,15 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     }
 
     double angle_increment =
-        (end_angle - start_angle) / (double)(params.num_rays - 1);
+        (end_angle - start_angle) / static_cast<double>(params.num_rays - 1);
 
     // Setup laser scan message
     auto laser_scan = std::make_unique<sensor_msgs::msg::LaserScan>();
     laser_scan->header.frame_id = params.ray_frame;
     laser_scan->header.stamp = image->header.stamp;
-    laser_scan->angle_increment = (float)angle_increment;
-    laser_scan->angle_min = (float)start_angle;
-    laser_scan->angle_max = (float)end_angle;
+    laser_scan->angle_increment = static_cast<float>(angle_increment);
+    laser_scan->angle_min = static_cast<float>(start_angle);
+    laser_scan->angle_max = static_cast<float>(end_angle);
     laser_scan->time_increment = 0;
     laser_scan->scan_time = 0;
     laser_scan->range_min = 0;
@@ -106,7 +107,7 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
 
     // Populate laser scan ranges
     for (int64_t i = 0; i < params.num_rays; i++) {
-        double angle = start_angle + (double)i * angle_increment;
+        double angle = start_angle + static_cast<double>(i) * angle_increment;
         laser_scan->ranges.push_back(ray_cast(state, angle));
     }
 
@@ -123,7 +124,7 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
 
 cv::Matx34d
 RayLocalizer::get_camera_extrinsic(const rclcpp::Time &time,
-                                   const std::string &optical_frame) {
+                                   const std::string &optical_frame) const {
     auto transform =
         tf_buffer->lookupTransform(optical_frame, params.ray_frame, time, 10ms);
 
@@ -140,7 +141,7 @@ RayLocalizer::get_camera_extrinsic(const rclcpp::Time &time,
 
 std::optional<cv::Matx33d> RayLocalizer::get_homography(
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info) {
-    cv::Matx33d cam_intrinsic{info->k.data()};
+    const cv::Matx33d cam_intrinsic{info->k.data()};
     cv::Matx34d cam_extrinsic;
     try {
         cam_extrinsic =
@@ -172,28 +173,25 @@ std::optional<cv::Matx33d> RayLocalizer::get_homography(
     return homography;
 }
 
-float RayLocalizer::ray_cast(ProcessingState &state, double angle) const {
+float RayLocalizer::ray_cast(ProcessingState &state, const double angle) const {
     // Homography H transforms points from ray plane -> image plane
     // H^(-T) transforms lines from ray plane -> image plane
-    ProjLine2d line = ProjLine2d({0, 0}, angle);
-    ProjLine2d line_img = state.inv_homography.t() * line;
+    const ProjLine2d line{{0, 0}, angle};
+    const ProjLine2d line_img = state.inv_homography.t() * line;
 
     // Clip ray to image bounds
-    auto intersection = ray_clip(static_cast<cv::Point2d>(state.ray_center),
-                                 line_img.direction(), state.viewport);
-
-    if (intersection) {
+    if (auto intersection = ray_clip(static_cast<cv::Point2d>(state.ray_center),
+                                     line_img.direction(), state.viewport)) {
         auto [start, end] = *intersection;
-        auto ray_start = static_cast<cv::Point>(start);
-        auto ray_end = static_cast<cv::Point>(end);
+        const auto ray_start = static_cast<cv::Point>(start);
+        const auto ray_end = static_cast<cv::Point>(end);
 
         debug_line(state, {255, 0, 0}, ray_start, ray_end);
 
-        auto edge = detect_edge(state, ray_start, ray_end);
-        if (edge) {
+        if (const auto edge = detect_edge(state, ray_start, ray_end)) {
             // Get distance to origin
-            double distance = cv::norm(static_cast<cv::Point2d>(*edge));
-            return (float)distance;
+            const double distance = cv::norm(static_cast<cv::Point2d>(*edge));
+            return static_cast<float>(distance);
         }
     }
 
@@ -228,16 +226,16 @@ std::optional<ProjPoint2d> RayLocalizer::detect_edge(ProcessingState &state,
 
             ProjPoint2d pos_entry = state.inv_homography * ProjPoint2d(*entry);
             ProjPoint2d pos_exit = state.inv_homography * ProjPoint2d(pos);
-            point_pairs.push_back({pos_entry, pos_exit});
+            point_pairs.emplace_back(pos_entry, pos_exit);
             entry = std::nullopt;
 
             if (prev_ray_iter != state.prev_ray.cend() && !detected) {
                 auto [last_entry, last_exit] = *prev_ray_iter;
                 ProjLine2d entry_line = pos_entry.cross(last_entry);
 
-                double w1 = entry_line.distance(pos_exit);
-                double w2 = entry_line.distance(last_exit);
-                double edge_width = (w1 + w2) * 0.5;
+                const double w1 = entry_line.distance(pos_exit);
+                const double w2 = entry_line.distance(last_exit);
+                const double edge_width = (w1 + w2) * 0.5;
 
                 ProjLine2d dbg_line = state.inv_homography.t() * entry_line;
                 debug_vector(state, {0, 255, 0}, *entry,
@@ -272,25 +270,29 @@ void RayLocalizer::setup_debug_image(ProcessingState &state) const {
     if (params.debug_warped) {
         // Create an affine transform to map the ray XY plane to the debug
         // image dimensions
-        auto scale = (double)params.debug_img_size / params.debug_real_size;
-        auto offset = (double)params.debug_img_size / 2.0;
+        const auto scale =
+            static_cast<double>(params.debug_img_size) / params.debug_real_size;
+        const auto offset = static_cast<double>(params.debug_img_size) / 2.0;
 
         // clang-format off
-        cv::Matx33d debug_affine{scale,  0,      0,
-                                 0, -scale, offset,
-                                 0,      0,      1};
+        const cv::Matx33d debug_affine{
+            scale,  0,      0,
+            0, -scale, offset,
+            0,      0,      1
+        };
         // clang-format on
         debug_transform = debug_affine * state.inv_homography;
 
         // Warp source image into debug image
-        cv::warpPerspective(
-            state.image, state.debug_image, debug_transform,
-            cv::Size((int)params.debug_img_size, (int)params.debug_img_size),
-            cv::InterpolationFlags::INTER_NEAREST,
-            cv::BorderTypes::BORDER_CONSTANT);
+        cv::warpPerspective(state.image, state.debug_image, debug_transform,
+                            cv::Size(static_cast<int>(params.debug_img_size),
+                                     static_cast<int>(params.debug_img_size)),
+                            cv::InterpolationFlags::INTER_NEAREST,
+                            cv::BorderTypes::BORDER_CONSTANT);
     } else {
         // Resize source image into debug image
-        double scale = (double)params.debug_img_size / (double)state.image.cols;
+        double scale = static_cast<double>(params.debug_img_size) /
+                       static_cast<double>(state.image.cols);
         cv::resize(state.image, state.debug_image, cv::Size(), scale, scale,
                    cv::INTER_AREA);
 

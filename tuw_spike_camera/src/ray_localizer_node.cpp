@@ -1,7 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <image_transport/image_transport.hpp>
-#include <sensor_msgs/msg/image.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -14,7 +13,7 @@ namespace tuw_spike_camera {
 
 using namespace sensor_msgs::msg;
 
-class RayLocalizerNode : public rclcpp::Node {
+class RayLocalizerNode final : public rclcpp::Node {
   public:
     explicit RayLocalizerNode(const rclcpp::NodeOptions &options)
         : Node("ray_localizer", options) {
@@ -49,8 +48,7 @@ class RayLocalizerNode : public rclcpp::Node {
         camera_sub = image_transport::create_camera_subscription(
             this, "camera/image_rect",
             [laser_scan_pub, ray_localizer](auto &img, auto &info) {
-                auto scan = ray_localizer->process_frame(img, info);
-                if (scan) {
+                if (auto scan = ray_localizer->process_frame(img, info)) {
                     laser_scan_pub->publish(std::move(scan));
                 }
             },

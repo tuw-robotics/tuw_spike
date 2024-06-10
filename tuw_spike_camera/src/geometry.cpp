@@ -8,7 +8,8 @@ ProjPoint2d::ProjPoint2d(const cv::Vec3d &vec) : cv::Vec3d(vec) {}
 
 ProjPoint2d::ProjPoint2d(const cv::Vec3d &&vec) : cv::Vec3d(vec) {}
 
-ProjPoint2d::ProjPoint2d(double x, double y) : cv::Vec3d(x, y, 1.0) {}
+ProjPoint2d::ProjPoint2d(const double x, const double y)
+    : cv::Vec3d(x, y, 1.0) {}
 
 ProjPoint2d::ProjPoint2d(const cv::Vec2d &point)
     : ProjPoint2d(point(0), point(1)) {}
@@ -25,11 +26,11 @@ double ProjPoint2d::y() const { return (*this)(1) / (*this)(2); }
 double ProjPoint2d::distance(const ProjPoint2d &other) const {
     if (at_infinity() || other.at_infinity()) {
         return std::numeric_limits<double>::infinity();
-    } else {
-        double dx = x() - other.x();
-        double dy = y() - other.y();
-        return sqrt(dx * dx + dy * dy);
     }
+
+    const double dx = x() - other.x();
+    const double dy = y() - other.y();
+    return sqrt(dx * dx + dy * dy);
 }
 
 ProjLine2d::ProjLine2d(const cv::Vec3d &vec) : cv::Vec3d(vec) {}
@@ -51,7 +52,8 @@ cv::Vec2d ProjLine2d::direction() const {
 }
 
 double ProjLine2d::distance(const ProjPoint2d &point) const {
-    double a = (*this)(0), b = (*this)(1);
+    const double a = (*this)(0);
+    const double b = (*this)(1);
     double tmp = dot(point) / point(2);
     // doesn't use abs, which always returns 0 because of a compilation bug
     if (tmp < 0.0)

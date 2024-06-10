@@ -39,7 +39,7 @@ class RayLocalizer {
     struct ProcessingState;
 
     cv::Matx34d get_camera_extrinsic(const rclcpp::Time &time,
-                                     const std::string &optical_frame);
+                                     const std::string &optical_frame) const;
     std::optional<cv::Matx33d>
     get_homography(const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info);
     void setup_debug_image(ProcessingState &state) const;
