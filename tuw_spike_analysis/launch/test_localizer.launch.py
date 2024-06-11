@@ -3,7 +3,7 @@ from launch_ros.descriptions import ComposableNode, ParameterFile
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, GroupAction
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, OrSubstitution
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, OrSubstitution, AndSubstitution, NotSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 
@@ -54,11 +54,25 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "amcl.launch.py"]))
     )
 
-    # Trajectory Driver
+    # Trajectory driver and recording
+    trajectory = LaunchConfiguration("trajectory")
     trajectory_driver = Node(
         package="tuw_spike_analysis",
         executable="trajectory_driver",
-        parameters=[{"velocity": 0.1}]
+        parameters=[{"velocity": 0.1}],
+        condition=IfCondition(trajectory)
+    )
+
+    trajectory_est_recoder = Node(
+        package="tuw_spike_analysis",
+        executable="trajectory_est_recorder",
+        condition=IfCondition(trajectory)
+    )
+
+    trajectory_sim_recoder = Node(
+        package="tuw_spike_analysis",
+        executable="trajectory_sim_recorder",
+        condition=IfCondition(AndSubstitution(trajectory, simulation))
     )
 
     return LaunchDescription([
@@ -67,6 +81,7 @@ def generate_launch_description():
         DeclareLaunchArgument("replay", default_value="False"),
         DeclareLaunchArgument("simulation", default_value="False"),
         DeclareLaunchArgument("model_name", default_value=robot_ns_from_hostname()),
+        DeclareLaunchArgument("trajectory", default_value="False"),
         SetParameter(name="use_sim_time", value=OrSubstitution(
             simulation,
             LaunchConfiguration("replay")
@@ -83,6 +98,8 @@ def generate_launch_description():
                 composable_node_descriptions=[localizer_comp]
             ),
             amcl_launch,
-            trajectory_driver
+            trajectory_driver,
+            trajectory_est_recoder,
+            trajectory_sim_recoder
         ])
     ])

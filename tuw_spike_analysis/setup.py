@@ -22,7 +22,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'trajectory_driver = tuw_spike_analysis.trajectory_driver:main'
+            'trajectory_driver = tuw_spike_analysis.trajectory_driver:main',
+            'trajectory_est_recorder = tuw_spike_analysis.trajectory_est_recorder:main',
+            'trajectory_sim_recorder = tuw_spike_analysis.trajectory_sim_recorder:main'
         ],
     },
 )
