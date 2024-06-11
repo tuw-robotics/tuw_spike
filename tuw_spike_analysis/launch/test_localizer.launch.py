@@ -56,8 +56,8 @@ def generate_launch_description():
 
     # Trajectory Driver
     trajectory_driver = Node(
-        package="tuw_camera_laserscan",
-        executable="test_trajectory_driver",
+        package="tuw_spike_analysis",
+        executable="trajectory_driver",
         parameters=[{"velocity": 0.1}]
     )
 

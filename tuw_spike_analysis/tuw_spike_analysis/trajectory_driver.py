@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
 import math
 
 from typing import TextIO
@@ -14,7 +12,7 @@ TRAJECTORY_UPDATE_PERIOD = 0.01
 
 class TestTrajectoryDriverNode(Node):
     def __init__(self, ground_truth: TextIO, estimated: TextIO) -> None:
-        super().__init__("test_trajectory_driver")
+        super().__init__("trajectory_driver")
 
         self.f_ground_truth = ground_truth
         self.f_estimated = estimated
