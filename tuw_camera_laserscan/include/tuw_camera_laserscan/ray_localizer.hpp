@@ -14,9 +14,9 @@
 #include <tf2_ros/buffer.h>
 
 #include "geometry.hpp"
-#include "tuw_spike_camera_ray_localizer_parameters.hpp"
+#include "tuw_camera_laserscan_ray_localizer_parameters.hpp"
 
-namespace tuw_spike_camera {
+namespace tuw_camera_laserscan {
 
 class RayLocalizer {
   public:
@@ -60,6 +60,6 @@ class RayLocalizer {
                              const cv::Vec2d &vector);
 };
 
-} // namespace tuw_spike_camera
+} // namespace tuw_camera_laserscan
 
 #endif // TUW_SPIKE_CAMERA__RAY_LOCALIZER_HPP_

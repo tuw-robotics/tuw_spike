@@ -3,19 +3,19 @@
 #include <utility>
 
 #include "rclcpp/logging.hpp"
-#include "tuw_spike_camera/ray_localizer.hpp"
+#include "tuw_camera_laserscan/ray_localizer.hpp"
 
 #include <cv_bridge/cv_bridge.h>
 
 // Need for tf2 conversion function to link
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-#include "tuw_spike_camera/filter_kernel.hpp"
-#include "tuw_spike_camera/geometry.hpp"
+#include "tuw_camera_laserscan/filter_kernel.hpp"
+#include "tuw_camera_laserscan/geometry.hpp"
 
 using namespace std::chrono_literals;
 
-namespace tuw_spike_camera {
+namespace tuw_camera_laserscan {
 
 static constexpr auto KERNEL_DIFF = std::to_array<int16_t>({1, 0, -1});
 static constexpr auto KERNEL_GAUSS = gaussian<int16_t, 5>(100, 0.8);
@@ -340,4 +340,4 @@ void RayLocalizer::debug_vector(const ProcessingState &state,
     debug_line(state, color, origin, cv::Vec2d(origin) + vector);
 }
 
-} // namespace tuw_spike_camera
+} // namespace tuw_camera_laserscan

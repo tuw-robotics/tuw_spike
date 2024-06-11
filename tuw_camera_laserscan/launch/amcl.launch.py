@@ -8,9 +8,9 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 
 def generate_launch_description():
-    tuw_spike_camera = FindPackageShare("tuw_spike_camera")
+    tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
 
-    params_yaml = PathJoinSubstitution([tuw_spike_camera, "config", "amcl.yaml"])
+    params_yaml = PathJoinSubstitution([tuw_camera_laserscan, "config", "amcl.yaml"])
 
     map_server = Node(
         package='nav2_map_server',
@@ -19,7 +19,7 @@ def generate_launch_description():
         output='screen',
         parameters=[
             params_yaml,
-            {'yaml_filename': PathJoinSubstitution([tuw_spike_camera, "maps", "map1.yaml"])}
+            {'yaml_filename': PathJoinSubstitution([tuw_camera_laserscan, "maps", "map1.yaml"])}
         ]
     )
 

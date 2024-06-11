@@ -1,8 +1,8 @@
-#include "tuw_spike_camera/geometry.hpp"
+#include "tuw_camera_laserscan/geometry.hpp"
 #include <cmath>
 #include <cstdlib>
 
-namespace tuw_spike_camera {
+namespace tuw_camera_laserscan {
 
 ProjPoint2d::ProjPoint2d(const cv::Vec3d &vec) : cv::Vec3d(vec) {}
 
@@ -94,4 +94,4 @@ ray_clip(const cv::Vec2d &ray_start, const cv::Vec2d &direction,
                           ray_start + t2 * direction);
 }
 
-} // namespace tuw_spike_camera
+} // namespace tuw_camera_laserscan

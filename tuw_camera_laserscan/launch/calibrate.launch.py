@@ -8,7 +8,7 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
-    tuw_spike_camera = FindPackageShare("tuw_spike_camera")
+    tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
 
     capture = LaunchConfiguration("capture")
     calibrate = LaunchConfiguration("calibrate")
@@ -23,7 +23,7 @@ def generate_launch_description():
     )
 
     capture_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "capture.launch.py"])),
+        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "capture.launch.py"])),
         launch_arguments=[("transport", transport), ("transport_lores", "False"), ("rectify", "False")],
         condition=IfCondition(capture)
     )
@@ -63,7 +63,7 @@ def generate_launch_description():
     )
 
     # Copy calibration file via docker (in deploy directory):
-    # docker -c lego0 cp calibrate-camera-1:/opt/ros/ros2_lego/ws02/install/tuw_spike_camera/share/tuw_spike_camera/calibration ../../src/ws02/tuw_spike_camera/
+    # docker -c lego0 cp calibrate-camera-1:/opt/ros/ros2_lego/ws02/install/tuw_camera_laserscan/share/tuw_camera_laserscan/calibration ../../src/ws02/tuw_camera_laserscan/
 
     return LaunchDescription([
         DeclareLaunchArgument("capture", default_value="True"),

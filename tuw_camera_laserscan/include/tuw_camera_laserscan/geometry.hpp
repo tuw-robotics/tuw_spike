@@ -5,7 +5,7 @@
 #include <optional>
 #include <utility>
 
-namespace tuw_spike_camera {
+namespace tuw_camera_laserscan {
 
 /**
  * @brief Represents a point in P² as a homogenous vector of R³
@@ -119,6 +119,6 @@ std::optional<std::pair<cv::Vec2d, cv::Vec2d>>
 ray_clip(const cv::Vec2d &ray_start, const cv::Vec2d &direction,
          const cv::Rect2d &bounds);
 
-} // namespace tuw_spike_camera
+} // namespace tuw_camera_laserscan
 
 #endif // TUW_SPIKE_CAMERA__GEOMETRY_HPP_

@@ -4,7 +4,7 @@
 #include <array>
 #include <utility>
 
-namespace tuw_spike_camera {
+namespace tuw_camera_laserscan {
 
 template <typename T, size_t N1, size_t N2>
 static constexpr std::array<T, N1 + N2 - 1>
@@ -126,6 +126,6 @@ template <typename TInput, typename TFilter> class FilterLineIterator {
     }
 };
 
-} // namespace tuw_spike_camera
+} // namespace tuw_camera_laserscan
 
 #endif // TUW_SPIKE_CAMERA_FILTER_KERNEL_HPP_

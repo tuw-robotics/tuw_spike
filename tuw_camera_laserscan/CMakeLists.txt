@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(tuw_spike_camera)
+project(tuw_camera_laserscan)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -27,13 +27,13 @@ FetchContent_MakeAvailable(backward)
 set_property(TARGET backward_object PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Common flags and dependencies
-add_library(tuw_spike_camera_common INTERFACE)
-target_include_directories(tuw_spike_camera_common INTERFACE
+add_library(tuw_camera_laserscan_common INTERFACE)
+target_include_directories(tuw_camera_laserscan_common INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(tuw_spike_camera_common INTERFACE c_std_99 cxx_std_20)  # Require C99 and C++20
+target_compile_features(tuw_camera_laserscan_common INTERFACE c_std_99 cxx_std_20)  # Require C99 and C++20
 
-ament_target_dependencies(tuw_spike_camera_common INTERFACE
+ament_target_dependencies(tuw_camera_laserscan_common INTERFACE
   rclcpp_components
   sensor_msgs
   image_transport
@@ -44,18 +44,18 @@ ament_target_dependencies(tuw_spike_camera_common INTERFACE
 add_subdirectory(src)
 
 # Register nodes
-rclcpp_components_register_node(tuw_spike_camera_ray_localizer_node
-  PLUGIN "tuw_spike_camera::RayLocalizerNode"
-  EXECUTABLE tuw_spike_camera_ray_localizer)
+rclcpp_components_register_node(tuw_camera_laserscan_ray_localizer_node
+  PLUGIN "tuw_camera_laserscan::RayLocalizerNode"
+  EXECUTABLE tuw_camera_laserscan_ray_localizer)
 
 # Export libraries
-ament_export_targets(export_tuw_spike_camera)
+ament_export_targets(export_tuw_camera_laserscan)
 install(
   TARGETS
-  tuw_spike_camera_common
-  tuw_spike_camera_ray_localizer_node
-  tuw_spike_camera_ray_localizer_parameters
-  EXPORT export_tuw_spike_camera
+  tuw_camera_laserscan_common
+  tuw_camera_laserscan_ray_localizer_node
+  tuw_camera_laserscan_ray_localizer_parameters
+  EXPORT export_tuw_camera_laserscan
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

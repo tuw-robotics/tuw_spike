@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     camera_info_name: camera
-    camera_info_url: package://tuw_spike_camera/calibration/${NAME}.yaml
+    camera_info_url: package://tuw_camera_laserscan/calibration/${NAME}.yaml
     frame_id: camera_optical
     stream_roles: ["video"]
     streams:

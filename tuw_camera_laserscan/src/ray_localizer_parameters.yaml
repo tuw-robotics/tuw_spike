@@ -1,4 +1,4 @@
-tuw_spike_camera:
+tuw_camera_laserscan:
   ray_frame: {
     type: string,
     description: "Frame in which the rays are cast (XY-plane)",

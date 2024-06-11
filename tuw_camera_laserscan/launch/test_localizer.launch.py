@@ -13,14 +13,14 @@ def robot_ns_from_hostname():
     return socket.gethostname().replace("-", "_")
 
 def generate_launch_description():
-    tuw_spike_camera = FindPackageShare("tuw_spike_camera")
+    tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
     tuw_spike_description = FindPackageShare("tuw_description")
     simulation = LaunchConfiguration("simulation")
 
     # Simulation captrue
     capture_sim_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [tuw_spike_camera, "launch", "capture_simulation.launch.py"]
+            [tuw_camera_laserscan, "launch", "capture_simulation.launch.py"]
         )),
         condition=IfCondition(simulation)
     )
@@ -28,7 +28,7 @@ def generate_launch_description():
     # Real capture
     capture_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [tuw_spike_camera, "launch", "capture.launch.py"]
+            [tuw_camera_laserscan, "launch", "capture.launch.py"]
         )),
         condition=UnlessCondition(simulation)
     )
@@ -42,21 +42,21 @@ def generate_launch_description():
 
     # Localizer
     localizer_comp = ComposableNode(
-        package='tuw_spike_camera',
-        plugin='tuw_spike_camera::RayLocalizerNode',
+        package='tuw_camera_laserscan',
+        plugin='tuw_camera_laserscan::RayLocalizerNode',
         name='ray_localizer',
         extra_arguments=[{'use_intra_process_comms': True}],
-        parameters=[ParameterFile(PathJoinSubstitution([tuw_spike_camera, "config", "localizer.yaml"]))]
+        parameters=[ParameterFile(PathJoinSubstitution([tuw_camera_laserscan, "config", "localizer.yaml"]))]
     )
 
     # AMCL
     amcl_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "amcl.launch.py"]))
+        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "amcl.launch.py"]))
     )
 
     # Trajectory Driver
     trajectory_driver = Node(
-        package="tuw_spike_camera",
+        package="tuw_camera_laserscan",
         executable="test_trajectory_driver",
         parameters=[{"velocity": 0.1}]
     )

@@ -5,11 +5,11 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <tuw_spike_camera/ray_localizer.hpp>
+#include <tuw_camera_laserscan/ray_localizer.hpp>
 
-#include "tuw_spike_camera_ray_localizer_parameters.hpp"
+#include "tuw_camera_laserscan_ray_localizer_parameters.hpp"
 
-namespace tuw_spike_camera {
+namespace tuw_camera_laserscan {
 
 using namespace sensor_msgs::msg;
 
@@ -62,7 +62,7 @@ class RayLocalizerNode final : public rclcpp::Node {
     image_transport::CameraSubscriber camera_sub;
 };
 
-} // namespace tuw_spike_camera
+} // namespace tuw_camera_laserscan
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(tuw_spike_camera::RayLocalizerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(tuw_camera_laserscan::RayLocalizerNode)

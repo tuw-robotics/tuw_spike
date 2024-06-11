@@ -6,11 +6,11 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
-    tuw_spike_camera = FindPackageShare("tuw_spike_camera")
+    tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
     tuw_simulation = FindPackageShare("tuw_simulation")
 
     container_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "container.launch.py"]))
+        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "container.launch.py"]))
     )
 
     simulation_world_launch = IncludeLaunchDescription(
@@ -26,7 +26,7 @@ def generate_launch_description():
     )
 
     container_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "container.launch.py"]))
+        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "container.launch.py"]))
     )
 
     return LaunchDescription([

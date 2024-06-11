@@ -8,17 +8,17 @@ from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
-    tuw_spike_camera = FindPackageShare("tuw_spike_camera")
+    tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
 
     container = [
         LaunchConfiguration("ros_namespace"), "/camera_processing_container"
     ]
 
     container_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_spike_camera, "launch", "container.launch.py"]))
+        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "container.launch.py"]))
     )
 
-    capture_params = PathJoinSubstitution([tuw_spike_camera, "config", "capture.yaml"])
+    capture_params = PathJoinSubstitution([tuw_camera_laserscan, "config", "capture.yaml"])
 
     capture_comp = ComposableNode(
         package='tuw_libcamera',
