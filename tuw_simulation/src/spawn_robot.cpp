@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     ignition::msgs::Empty req;
 
     bool result;
-    bool r = node_ign.Request("/world/plain_world/scene/info", req, 1000, res, result);
+    bool r = node_ign.Request("/world/plain_world/scene/info", req, 20000, res, result);
     if (r) {
         if (result) {
             for (int i = 0; i < res.model_size(); i++) {
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
         req_c.mutable_pose()->mutable_position()->set_y(y);
         req_c.mutable_pose()->mutable_position()->set_z(z);
         bool executed =
-            node_ign.Request("/world/plain_world/create", req_c, 1000, res_c, result);
+            node_ign.Request("/world/plain_world/create", req_c, 20000, res_c, result);
         if (executed) {
             if (result) {
                 std::cerr << "Entity was created : [" << res_c.data() << "]"
