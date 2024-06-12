@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -19,14 +20,24 @@
 
 using namespace std::chrono_literals;
 
-/* This example creates a subclass of Node and uses std::bind() to register a
- * member function as a callback from the timer. */
+static std::optional<std::string> robot_description = std::nullopt;
+
+void read_description(const std_msgs::msg::String & msg)
+{
+    robot_description = msg.data;
+}
 
 int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
 
-    auto node = std::make_shared<rclcpp::Node>("minimal_client");
-
+    auto node = std::make_shared<rclcpp::Node>("robot_spawner");
+    auto sub = node->create_subscription<std_msgs::msg::String>("robot_description", 10, read_description);
+    
+    while (!robot_description) {
+        rclcpp::spin_some(node);
+        rclcpp::sleep_for(10ms);
+    }
+   
     auto x = node->declare_parameter<double>("X", 0.0);
     auto y = node->declare_parameter<double>("Y", 0.0);
     double z = 0.1;
@@ -72,7 +83,7 @@ int main(int argc, char *argv[]) {
     if (!exists && success) {
         ignition::msgs::EntityFactory req_c;
         ignition::msgs::Boolean res_c;
-        req_c.set_sdf(argv[1]);
+        req_c.set_sdf(*robot_description);
         req_c.set_name(name);
         req_c.mutable_pose()->mutable_position()->set_x(x);
         req_c.mutable_pose()->mutable_position()->set_y(y);
@@ -93,9 +104,8 @@ int main(int argc, char *argv[]) {
                 success = false;
             }
     }
-
-    std::cout << success;
     rclcpp::shutdown();
 
-    return 0;
+    return success ? 0 : 1;
 }
+
