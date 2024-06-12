@@ -30,16 +30,18 @@ def generate_launch_description():
                 ]
             ),
             " namespace:=",
-            LaunchConfiguration('model_name')
+            LaunchConfiguration('ros_namespace')
         ]
     )
+    
+    remappings = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
     
     params = {'robot_description': robot_description_content}
     robot_state_publisher = Node(package='robot_state_publisher',
                                   executable='robot_state_publisher',
                                   output='both',
                                   parameters=[params],
-                                  namespace=[LaunchConfiguration('model_name')],)  
+                                  remappings=remappings)   
     
     return LaunchDescription(
         [model_name_arg, robot_state_publisher])
