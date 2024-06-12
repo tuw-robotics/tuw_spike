@@ -14,7 +14,7 @@ from launch.event_handlers import (OnExecutionComplete, OnProcessExit,
 def generate_launch_description():
 
     use_sim_time     = LaunchConfiguration('use_sim_time',  default='true')
-    model_name_arg   = DeclareLaunchArgument('model_name',  default_value=TextSubstitution(text='robot0'))
+    model_name_arg   = DeclareLaunchArgument('ros_namespace',  default_value="")
     
     # Get URDF via xacro
     robot_description_content = Command(
