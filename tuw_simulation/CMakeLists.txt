@@ -43,7 +43,10 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/spawn_robot.py
-  scripts/record_bag.py
+  scripts/circle_trajectory.py
+  scripts/line_trajectory.py
+  scripts/curve_trajectory.py
+  scripts/combined_trajectory.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

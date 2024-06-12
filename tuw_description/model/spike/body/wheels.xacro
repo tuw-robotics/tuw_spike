@@ -41,10 +41,8 @@
         </link>
 
         <gazebo reference="${prefix}_wheel">
-            <mu1 value="1.0"/>
-            <mu2 value="1.0"/>
-            <kp value="10000000.0"/>
-            <kd value="1.0"/>
+            <mu1 value="0.6"/>
+            <mu2 value="0.6"/>
             <fdir1 value="1 0 0"/>
         </gazebo>
     </xacro:macro>
