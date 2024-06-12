@@ -1,0 +1,71 @@
+tuw_camera_laserscan:
+  ray_frame: {
+    type: string,
+    description: "Frame in which the rays are cast (XY-plane)",
+    default_value: "",
+    read_only: true,
+    validation: {
+      size_gt<>: [0]
+    }
+  }
+  debug_img_size: {
+    type: int,
+    description: "Image size for debug image",
+    default_value: 400,
+    read_only: true,
+    validation: {
+      gt<>: [0]
+    }
+  }
+  debug_real_size: {
+    type: double,
+    description: "Real world size of the debug image viewport",
+    default_value: 0.2,
+    read_only: true,
+    validation: {
+      gt<>: [0]
+    }
+  }
+  debug_warped: {
+    type: bool,
+    description: "Output the warped image as debug image",
+    default_value: false,
+    read_only: false
+  }
+  num_rays: {
+    type: int,
+    description: "Number of rays to create",
+    default_value: 20,
+    validation: {
+      gt<>: [0]
+    }
+  }
+  edge_enter_threshold: {
+    type: int,
+    description: "Threshold for detecting the edge entry",
+    default_value: 100,
+    validation: {
+      bounds<>: [0, 32767]
+    }
+  }
+  edge_exit_threshold: {
+    type: int,
+    description: "Threshold for detecting the edge exit",
+    default_value: 100,
+    validation: {
+      bounds<>: [ 0, 32767 ]
+    }
+  }
+  edge_min_width: {
+    type: double,
+    description: "Minimum edge width threshold",
+    default_value: 0,
+    validation: {
+      gt_eq<>: [0]
+    }
+  }
+  edge_max_width: {
+    type: double,
+    description: "Maximum edge width threshold, negative to disable check",
+    default_value: -1.0
+  }
