@@ -9,8 +9,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
-#include "boost/process.hpp"
-
 #include "ignition/msgs/entity_factory.pb.h"
 #include "ignition/transport/Node.hh"
 #include "ignition/msgs/stringmsg.pb.h"
@@ -33,8 +31,13 @@ int main(int argc, char *argv[]) {
     auto y = node->declare_parameter<double>("Y", 0.0);
     double z = 0.1;
 
-    std::string name = node->declare_parameter<std::string>("model_name", "robot0");
-
+    std::string name = node->get_effective_namespace();
+    name = name.substr(1);
+    if (name.empty())
+    {
+        name = "robot0";
+    }
+    
     bool exists = false;
     bool success = true;
 
