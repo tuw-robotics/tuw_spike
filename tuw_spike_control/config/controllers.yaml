@@ -17,7 +17,7 @@
   ros__parameters:
     left_wheel_names: ["left_wheel_joint"]
     right_wheel_names: ["right_wheel_joint"]
-    wheel_radius: 0.0565
+    wheel_radius: 0.02825
     wheel_separation: 0.112
     enable_odom_tf: true
     tf_frame_prefix_enable: false

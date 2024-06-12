@@ -164,12 +164,12 @@ return_type TuwSpikeSystemInterface::read(const rclcpp::Time &time,
     if (p2_speed != INT32_MAX) {
         // new values read from port 2
         state_motor_velocity[0] = 2.0 * M_PI * p2_speed / 33;
-        state_motor_position[0] = 1.0 * p2_apos / (180*M_PI); 
+        state_motor_position[0] = 1.0 * p2_apos / 180.0 * M_PI; 
     }
     if (p3_speed != INT32_MAX) {
         // new values read from port 3
         state_motor_velocity[1] = 2.0 * M_PI * p3_speed / 33;
-        state_motor_position[1] = 1.0 * p3_apos / (180*M_PI);
+        state_motor_position[1] = 1.0 * p3_apos / 180.0 * M_PI;
     }
 
     // std::string cmd = "port 2; selonce 0; port 3; selonce 0;";
@@ -221,7 +221,7 @@ return_type TuwSpikeSystemInterface::write(const rclcpp::Time &time,
         velocity_right = -velocity_right;
     }
 
-    std::string message = "port 2; set " +  std::to_string(velocity_left) + "; port 3; set " +  std::to_string(velocity_right) + ";\r";
+    std::string message = "port 2; set " +  std::to_string(velocity_left / (2*M_PI)) + "; port 3; set " +  std::to_string(velocity_right / (2*M_PI)) + ";\r";
     boost::asio::write(serial, boost::asio::buffer(message)); 
 
     return return_type::OK;
