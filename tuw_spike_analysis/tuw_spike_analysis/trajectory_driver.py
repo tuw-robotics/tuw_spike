@@ -2,7 +2,8 @@ import math
 
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
+from std_msgs.msg import Header
+from geometry_msgs.msg import TwistStamped, Twist
 
 TRAJECTORY_UPDATE_PERIOD = 0.01
 
@@ -25,7 +26,7 @@ class TestTrajectoryDriverNode(Node):
 
         self.time = -self.startup_delay
 
-        self.pub_vel = self.create_publisher(Twist, "cmd_vel", 10)
+        self.pub_vel = self.create_publisher(TwistStamped, "cmd_vel", 10)
         self.trajectory_timer = self.create_timer(TRAJECTORY_UPDATE_PERIOD, self.update_trajectory)
         self.update_trajectory()
 
@@ -42,7 +43,10 @@ class TestTrajectoryDriverNode(Node):
             and self.time < 1.5*self.time_straight + 2.0*self.time_curve:
             twist.angular.z = -self.angular_velocity
 
-        self.pub_vel.publish(twist)
+        self.pub_vel.publish(TwistStamped(
+            twist=twist,
+            header=Header(stamp=self.get_clock().now().to_msg())
+        ))
 
         self.time += TRAJECTORY_UPDATE_PERIOD
         if self.time > self.total_time:
