@@ -14,7 +14,6 @@ from launch.event_handlers import (OnExecutionComplete, OnProcessExit,
 def generate_launch_description():
 
     use_sim_time     = LaunchConfiguration('use_sim_time',  default='true')
-    model_name_arg   = DeclareLaunchArgument('model_name',  default_value=TextSubstitution(text='robot0'))
     X_launch_arg     = DeclareLaunchArgument('X',           default_value=TextSubstitution(text='0.0'))
     Y_launch_arg     = DeclareLaunchArgument('Y',           default_value=TextSubstitution(text='0.0'))
     
@@ -33,7 +32,7 @@ def generate_launch_description():
                 ]
             ),
             " namespace:=",
-            LaunchConfiguration('model_name')
+            LaunchConfiguration('ros_namespace')
         ]
     )
     
@@ -42,17 +41,18 @@ def generate_launch_description():
         executable="spawn",
         parameters=[{
                 "X": LaunchConfiguration('X'),
-                "Y": LaunchConfiguration('Y'),
-                "model_name": LaunchConfiguration('model_name')}],
+                "Y": LaunchConfiguration('Y')}],
         arguments=[robot_description_content]
     )
+    
+    remappings = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
     
     params = {'robot_description': robot_description_content}
     robot_state_publisher = Node(package='robot_state_publisher',
                                   executable='robot_state_publisher',
                                   output='both',
                                   parameters=[params],
-                                  namespace=[LaunchConfiguration('model_name')],)  
+                                  remappings=remappings)  
     
     tuw_simulation = FindPackageShare("tuw_simulation")
     bridge_config = PathJoinSubstitution([tuw_simulation, "world", "tuw_simulation_bridge.yaml"])
@@ -60,8 +60,7 @@ def generate_launch_description():
     bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
-        parameters=[{"config_file": bridge_config}, {'use_sim_time': True}, {'expand_gz_topic_names': True}],
-        namespace=[LaunchConfiguration("model_name")],
+        parameters=[{"config_file": bridge_config}, {'use_sim_time': True}, {'expand_gz_topic_names': True}]
     )
             
     def error_handling(event):
@@ -73,9 +72,9 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+        DeclareLaunchArgument("ros_namespace", default_value="robot0"),
         X_launch_arg,
         Y_launch_arg,
-        model_name_arg,
         spawner,
         RegisterEventHandler(
             OnProcessIO(

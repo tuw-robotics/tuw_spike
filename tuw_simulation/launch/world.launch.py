@@ -26,6 +26,16 @@ def generate_launch_description():
         }.items()
     )
     
+    tuw_simulation = FindPackageShare("tuw_simulation")
+    bridge_config = PathJoinSubstitution([tuw_simulation, "world", "tuw_simulation_bridge_clock.yaml"])
+    
+    bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        parameters=[{"config_file": bridge_config}, {'use_sim_time': True}, {'expand_gz_topic_names': True}]
+    )
+    
     return LaunchDescription([
-        gz_sim]
+        gz_sim,
+        bridge]
     )
