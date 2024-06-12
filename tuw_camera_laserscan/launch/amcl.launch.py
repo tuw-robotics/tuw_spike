@@ -1,11 +1,7 @@
 from launch_ros.actions import Node
-from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, GroupAction
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition, UnlessCondition
+from launch.substitutions import PathJoinSubstitution
 
 def generate_launch_description():
     tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
@@ -29,7 +25,11 @@ def generate_launch_description():
         name='amcl',
         output='screen',
         parameters=[params_yaml],
-        ros_arguments=["--log-level", "robot0.amcl:=debug"]
+        ros_arguments=["--log-level", "robot0.amcl:=debug"],
+        remappings=[
+            ('/tf', 'tf'),
+            ('/tf_static', 'tf_static')
+        ]
     )
 
     lifecycle_manager = Node(

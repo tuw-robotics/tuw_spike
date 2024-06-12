@@ -11,7 +11,7 @@ def generate_launch_description():
     tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
 
     container = [
-        LaunchConfiguration("ros_namespace", default="/"), "/camera_processing_container"
+        LaunchConfiguration("ros_namespace"), "/camera_processing_container"
     ]
 
     container_launch = IncludeLaunchDescription(
@@ -68,6 +68,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument("ros_namespace", default_value=""),
         DeclareLaunchArgument("record", default_value="False"),
         DeclareLaunchArgument("replay", default_value="False"),
         DeclareLaunchArgument("transport", default_value="False"),

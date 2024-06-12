@@ -13,12 +13,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "container.launch.py"]))
     )
 
-    simulation_world_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [tuw_simulation, "launch", "world.launch.py"]
-        ))
-    )
-
     simulation_spawn_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
             [tuw_simulation, "launch", "spawn_robot.launch.py"]
@@ -30,10 +24,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        simulation_world_launch,
-        TimerAction(period=5.0, actions=[simulation_spawn_launch]),
-        GroupAction([
-            PushRosNamespace(LaunchConfiguration("model_name")),
-            container_launch
-        ])
+        container_launch,
+        simulation_spawn_launch
     ])
