@@ -1,0 +1,9 @@
+<library path="tuw_spike_control_interface">
+    <class name="tuw_spike_control/TuwSpikeSystemInterface"
+           type="tuw_spike_control::TuwSpikeSystemInterface"
+           base_class_type="hardware_interface::SystemInterface">
+        <description>
+            Plugin for ros2_control: hardware interface for spike diff drive.
+        </description>
+    </class>
+</library>

@@ -20,5 +20,9 @@
   
   <!-- differential drive  and joint stage plugin -->
   <xacro:include filename="body/plugins.xacro"/>
+
+  <xacro:include filename="ros_control.xacro"/>
+
+  <xacro:system_hardware />
   
 </robot>

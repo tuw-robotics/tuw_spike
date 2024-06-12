@@ -1,0 +1,32 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:macro name="system_hardware">
+        <ros2_control name="system_hardware" type="system">
+            <hardware>
+                <plugin>tuw_spike_control/TuwSpikeSystemInterface</plugin>
+            </hardware>
+            <joint name="left_wheel_joint">
+                <param name="Port">2</param>
+                <param name="reverse">true</param>
+                <command_interface name="velocity">
+                    <param name="min">-2.5</param>
+                    <param name="max">+2.5</param>
+                    <param name="reverse">true</param>
+                </command_interface>
+                <state_interface name="position"/>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="right_wheel_joint">
+                <param name="Port">3</param>
+                <command_interface name="velocity">
+                    <param name="min">-2.5</param>
+                    <param name="max">+2.5</param>
+                </command_interface>
+                <state_interface name="position"/>
+                <state_interface name="velocity"/>
+            </joint>
+
+        </ros2_control>
+    </xacro:macro>
+
+</robot>
