@@ -19,10 +19,6 @@ def generate_launch_description():
         ))
     )
 
-    container_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "container.launch.py"]))
-    )
-
     return LaunchDescription([
         container_launch,
         simulation_spawn_launch

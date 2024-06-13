@@ -9,7 +9,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
     tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
-    tuw_spike_description = FindPackageShare("tuw_description")
 
     container = [
         LaunchConfiguration("ros_namespace"), "/camera_processing_container"
@@ -25,12 +24,6 @@ def generate_launch_description():
         extra_arguments=[{'use_intra_process_comms': True}],
         namespace="camera",
         name="rectify"
-    )
-
-    robot_state_pub = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [tuw_spike_description, "launch", "spike_description.launch.py"]
-        )),
     )
 
     replay = ExecuteProcess(
@@ -60,7 +53,6 @@ def generate_launch_description():
         DeclareLaunchArgument("rate", default_value="1.0"),
         replay,
         container_launch,
-        #robot_state_pub,
         LoadComposableNodes(
             target_container=container,
             composable_node_descriptions=[rectify_comp],
