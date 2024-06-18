@@ -7,6 +7,9 @@
 #include <math.h>
 
 // run with "docker -c lego0 compose up --build hardware"
+// hardware:
+//      extend: runtime
+//      command: ros2 run serial_if serial_if
 
 int main(int argc, char ** argv)
 {
@@ -65,7 +68,7 @@ int main(int argc, char ** argv)
   int p3_apos = 0;
 
   // Read data from serial port
-  for (int i = 0; i < 40; i++) {
+  for (int i = 0; i < 200; i++) {
     // Buffer to store incoming data
     std::vector<char> buffer(128);  // Adjust size as needed
     // Read data from serial port
@@ -99,13 +102,33 @@ int main(int argc, char ** argv)
                       std::string apos = current.substr(second_space + 1, third_space - second_space - 1);
 
                       if (speed.size() > 0 && apos.size() > 0) {
-                        if (!substring.compare(p2_str)) {
-                          p2_speed = std::stoi(speed);
-                          p2_apos = std::stoi(apos);
-                        } else if (!substring.compare(p3_str)) {
-                          p3_speed = std::stoi(speed);
-                          p3_apos = std::stoi(apos);
-                        }
+                          if (!substring.compare(p2_str)) {
+                              try {
+                                  p2_speed = std::stoi(speed);
+                              } catch (std::invalid_argument const& ex) {
+                                  std::cout << ex.what() << " ; input_s2:" << speed << '\n';
+                              }
+                              try {
+                                  p2_apos = std::stoi(apos);
+                              } catch (std::invalid_argument const& ex) {
+                                  std::cout << ex.what() << " ; input_a2:" << apos << '\n';
+                              }
+                              // p2_speed = std::stoi(speed);
+                              // p2_apos = std::stoi(apos);
+                          } else if (!substring.compare(p3_str)) {
+                              try {
+                                  p3_speed = std::stoi(speed);
+                              } catch (std::invalid_argument const& ex) {
+                                  std::cout << ex.what() << " ; input_s3:" << speed << '\n';
+                              }
+                              try {
+                                  p3_apos = std::stoi(apos);
+                              } catch (std::invalid_argument const& ex) {
+                                  std::cout << ex.what() << " ; input_a3:" << apos << '\n';
+                              }
+                            // p3_speed = std::stoi(speed);
+                            // p3_apos = std::stoi(apos);
+                          }
                       }
                   }
               }
@@ -117,41 +140,16 @@ int main(int argc, char ** argv)
       }
     } 
     std::cout << "p2_speed in rpm: " << p2_speed << "; p2_apos in deg: " << p2_apos << "; p3_speed: " << p3_speed << "; p3_apos: " << p3_apos << std::endl;
-    double p2_rad_s = 2.0 * M_PI * p2_speed / 33;
-    std::cout << "p2_speed in rad/s: " << p2_rad_s << std::endl;
+    // double p2_rad_s = 2.0 * M_PI * p2_speed / 33;
+    // std::cout << "p2_speed in rad/s: " << p2_rad_s << std::endl;
 
-    // if (error) {
-    //     std::cerr << "Error reading from serial port: " << error.message() << std::endl;
-    // } else {
-    //     std::cout << "Read " << bytes_read << " bytes: ";
-    //     for (std::size_t i = 0; i < bytes_read; ++i) {
-    //         std::cout << buffer[i];
-    //     }
-    //     std::cout << std::endl;
+    // if (i == 20) {
+    //   cmd = "port 2; set 1;\r";
+    //   std::cout << "Command: " << cmd << std::endl; 
+    //   boost::asio::write(serial, boost::asio::buffer(cmd));
     // }
-    if (i == 20) {
-      cmd = "port 2; set 1;\r";
-      std::cout << "Command: " << cmd << std::endl; 
-      boost::asio::write(serial, boost::asio::buffer(cmd));
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
   }
-
-  // // Read data from serial port
-  // for (int i = 0; i < 100; i++) {
-  //   boost::asio::streambuf b;
-  //   size_t read_count = boost::asio::read_until(serial, b, '\n');
-  //   std::istream is(&b);
-  //   std::string line;
-  //   std::getline(is, line); 
-  //   std::cout << "read: " << line << "(" << std::to_string(read_count) << " chars)" << std::endl;
-  //   if (i == 50) {
-  //     cmd = "port 2; set -1;\r";
-  //     std::cout << "Command: " << cmd << std::endl; 
-  //     boost::asio::write(serial, boost::asio::buffer(cmd));
-  //   }
-  //   std::this_thread::sleep_for(std::chrono::milliseconds(30));
-  // }
 
 
 

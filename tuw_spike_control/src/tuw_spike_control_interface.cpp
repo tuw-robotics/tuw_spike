@@ -9,6 +9,8 @@
 #include <unistd.h> // write(), read(), close()
 #include <boost/asio.hpp>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rcutils/logging_macros.h"
@@ -30,7 +32,12 @@ boost::asio::serial_port serial(io_context);
 
 TuwSpikeSystemInterface::TuwSpikeSystemInterface() = default;
 
-TuwSpikeSystemInterface::~TuwSpikeSystemInterface() = default;
+TuwSpikeSystemInterface::~TuwSpikeSystemInterface()
+{
+  // If controller manager is shutdown via Ctrl + C, the on_deactivate methods won't be called.
+  // A destructor with a call to on_deactivate is needed to ensure the device is stopped.
+  on_deactivate(rclcpp_lifecycle::State());
+}
 
 CallbackReturn
 TuwSpikeSystemInterface::on_init(const HardwareInfo &hardware_info) {
@@ -139,11 +146,27 @@ return_type TuwSpikeSystemInterface::read(const rclcpp::Time &time,
 
                             if (speed.size() > 0 && apos.size() > 0) {
                                 if (!substring.compare(p2_str)) {
-                                    p2_speed = std::stoi(speed);
-                                    p2_apos = std::stoi(apos);
+                                    try {
+                                        p2_speed = std::stoi(speed);
+                                    } catch (std::invalid_argument const& e) {
+                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing speed_2: %s", e.what());
+                                    }
+                                    try {
+                                        p2_apos = std::stoi(apos);
+                                    } catch (std::invalid_argument const& e) {
+                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing pos_2: %s", e.what());
+                                    }
                                 } else if (!substring.compare(p3_str)) {
-                                    p3_speed = std::stoi(speed);
-                                    p3_apos = std::stoi(apos);
+                                    try {
+                                        p3_speed = std::stoi(speed);
+                                    } catch (std::invalid_argument const& e) {
+                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing speed_3: %s", e.what());
+                                    }
+                                    try {
+                                        p3_apos = std::stoi(apos);
+                                    } catch (std::invalid_argument const& e) {
+                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing pos_3: %s", e.what());
+                                    }
                                 }
                             }
                         }
@@ -157,51 +180,22 @@ return_type TuwSpikeSystemInterface::read(const rclcpp::Time &time,
     }
     if (reverse[0]) {
         p2_apos = -p2_apos;
+        p2_speed = -p2_speed; 
     }
     if (reverse[1]) {
         p3_apos = -p3_apos;
+        p3_speed = -p3_speed;
     }
-    if (p2_speed != INT32_MAX) {
+    if (abs(p2_speed) != INT32_MAX) {
         // new values read from port 2
         state_motor_velocity[0] = 2.0 * M_PI * p2_speed / 33;
         state_motor_position[0] = 1.0 * p2_apos / 180.0 * M_PI; 
     }
-    if (p3_speed != INT32_MAX) {
+    if (abs(p3_speed) != INT32_MAX) {
         // new values read from port 3
         state_motor_velocity[1] = 2.0 * M_PI * p3_speed / 33;
         state_motor_position[1] = 1.0 * p3_apos / 180.0 * M_PI;
     }
-
-    // std::string cmd = "port 2; selonce 0; port 3; selonce 0;";
-    // boost::asio::write(serial, boost::asio::buffer(cmd));
-
-    // for (int i = 0; i < 2; i++) {
-    //     boost::asio::streambuf b;
-    //     boost::asio::read_until(serial, b, '\n');
-    //     std::istream is(&b);
-    //     std::string line;
-    //     std::getline(is, line); 
-    //     std::cout << "read: " << line << std::endl;
-    //     if (line[0] == "P" && line[2] == "C") {
-    //         char ch = line[1];
-    //         int portId = ch - '2';
-    //         std::vector<std::string> data;
-    //         std::stringstream ss(str.substr(5));
-    //         std::string token;
-
-    //         while (std::getline(ss, token, ' ')) {
-    //             data.push_back(token);
-    //         }
-    //         try {
-    //             double new_vel = std::stod(data[0]);
-    //             state_motor_velocity[portId] = new_vel * 3 / 100;
-    //             state_motor_position[portId] = std::stod(data[1]);
-    //         } catch {
-    //             state_motor_position[portId] = 0;
-    //             state_motor_velocity[portId] = 0;
-    //         }
-    //     }
-    // } 
 
     return return_type::OK;
 }
@@ -245,6 +239,7 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
         boost::asio::write(serial, boost::asio::buffer(cmd));
         cmd = "plimit 1; port 2; combi 0 1 0 2 0 3 0; select 0 ; selrate 10; pid_diff 2 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         cmd = "port 3; combi 0 1 0 2 0 3 0; select 0; selrate 10; pid_diff 3 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
     
@@ -272,6 +267,7 @@ CallbackReturn TuwSpikeSystemInterface::on_cleanup(
 
 CallbackReturn TuwSpikeSystemInterface::on_shutdown(
     const rclcpp_lifecycle::State &previous_state) {
+    (void)previous_state;
     // do the same steps as in cleanup
     return on_cleanup(previous_state);
 }
@@ -285,7 +281,8 @@ CallbackReturn TuwSpikeSystemInterface::on_activate(
 CallbackReturn TuwSpikeSystemInterface::on_deactivate(
     const rclcpp_lifecycle::State &previous_state) {
     (void)previous_state;
-    return CallbackReturn::SUCCESS;
+    // do the same steps as in cleanup
+    return on_cleanup(previous_state);
 }
 
 CallbackReturn TuwSpikeSystemInterface::on_error(
