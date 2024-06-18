@@ -7,6 +7,10 @@ from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, OrSu
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 
+def robot_ns_from_hostname():
+    import socket
+    return socket.gethostname().replace("-", "_")
+
 def generate_launch_description():
     tuw_simulation = FindPackageShare("tuw_spike_simulation")
     
@@ -24,15 +28,15 @@ def generate_launch_description():
 
     # Trajectory Driver
     trajectory_driver = Node(
-        package="tuw_spike_simulation",
-        executable="combined_trajectory.py",
-        namespace=[LaunchConfiguration("model_name")]
+        package="tuw_spike_analysis",
+        executable="combined_trajectory"
     )
 
     return LaunchDescription([
         # Arguments
         SetParameter(name="use_sim_time", value="true"),
-        DeclareLaunchArgument("model_name", default_value="robot0"),
+        DeclareLaunchArgument("robot_ns", default_value=robot_ns_from_hostname()),
+        PushRosNamespace(LaunchConfiguration("robot_ns")),
         # Global Namespace
         simulation_world_launch,
         TimerAction(period=5.0, actions=[simulation_spawn_launch]),

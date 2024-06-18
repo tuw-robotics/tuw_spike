@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import TwistStamped
 from typing import TextIO
 from rclpy.time import Time
 
@@ -18,7 +18,7 @@ class Line_Trajectory(Node):
         for f in self.f_ground_truth, self.f_odom:
             print("timestamp tx ty tz qx qy qz qw vx", file=f)
         
-        self.pub_vel = self.create_publisher(Twist, "cmd_vel", 10)
+        self.pub_vel = self.create_publisher(TwistStamped, "cmd_vel", 10)
         self.sub_odom = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
         self.sub_ground_truth = self.create_subscription(Odometry, "odom_ground_truth", self.ground_truth_callback, 10)
 
@@ -32,19 +32,19 @@ class Line_Trajectory(Node):
         
           
     def delay_timer_callback(self):
-        twist = Twist()
+        twist = TwistStamped()
         
         if self.time >= 0.0 and self.time < 1.0:
-            twist.linear.x = self.velocity/4
+            twist.twist.linear.x = self.velocity/4
             self.get_logger().info(f"below 1s")
         elif self.time >= 1.0 and self.time < 2.0:
             self.get_logger().info(f"below 2s")
-            twist.linear.x = self.velocity
+            twist.twist.linear.x = self.velocity
         elif self.time >= 2.0:
             self.get_logger().info(f"greater 2s")
-            twist.linear.x = 0.0
+            twist.twist.linear.x = 0.0
         
-        self.get_logger().info(f"velocity: {twist.linear.x}, time: {self.time}")
+        self.get_logger().info(f"velocity: {twist.twist.linear.x}, time: {self.time}")
         self.pub_vel.publish(twist)
         self.time += 0.01
         

@@ -25,7 +25,11 @@ setup(
         'console_scripts': [
             'trajectory_driver = tuw_spike_analysis.trajectory_driver:main',
             'trajectory_est_recorder = tuw_spike_analysis.trajectory_est_recorder:main',
-            'trajectory_sim_recorder = tuw_spike_analysis.trajectory_sim_recorder:main'
+            'trajectory_sim_recorder = tuw_spike_analysis.trajectory_sim_recorder:main',
+            'combined_trajectory = tuw_spike_analysis.simulation_scripts.combined_trajectory:main',
+            'curve_trajectory = tuw_spike_analysis.simulation_scripts.curve_trajectory:main',
+            'line_trajectory = tuw_spike_analysis.simulation_scripts.line_trajectory:main',
+            'circle_trajectory = tuw_spike_analysis.simulation_scripts.circle_trajectory:main'
         ],
     },
 )

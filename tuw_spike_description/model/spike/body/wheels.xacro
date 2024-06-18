@@ -15,7 +15,7 @@
             <collision>
                 <origin xyz="0 0 0" rpy="${PI/2} 0 0" />
                 <geometry>
-                    <cylinder length="${wheel_len/10}" radius="${wheel_radius}" />
+                    <cylinder length="${wheel_len}" radius="${wheel_radius}" />
                 </geometry>
             </collision>
 
@@ -39,8 +39,8 @@
         </link>
 
         <gazebo reference="${prefix}_wheel">
-            <mu1 value="0.6"/>
-            <mu2 value="0.6"/>
+            <mu1 value="1.0"/>
+            <mu2 value="1.0"/>
             <fdir1 value="1 0 0"/>
         </gazebo>
     </xacro:macro>
