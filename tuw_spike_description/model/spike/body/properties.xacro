@@ -7,10 +7,10 @@
     <xacro:property name="wheel_x" value="-0.08"/>
     <xacro:property name="wheel_z" value="-0.016"/>
     <xacro:property name="wheel_y" value="0.056"/>
-    <xacro:property name="wheel_diameter" value="0.056"/> <!-- lego diameter 56mm -->
+    <xacro:property name="wheel_diameter" value="0.056"/>
     <xacro:property name="wheel_radius" value="${wheel_diameter/2}"/>
-    <xacro:property name="wheel_len" value="0.0139"/> <!-- lego len 14mm -->
-    <xacro:property name="wheel_mass" value="0.016"/> <!-- kein gewicht von lego noch abwiegen-->
+    <xacro:property name="wheel_len" value="0.0139"/>
+    <xacro:property name="wheel_mass" value="0.016"/>
 
     <!-- Caster wheel from blender -->
     <xacro:property name="caster_z" value="-0.0344"/>
@@ -21,11 +21,10 @@
     <xacro:property name="caster_mass" value="0.005"/>
 
     <!-- base Chassis -->
-    <!-- Werte sind nur vorrübergehend -->
     <xacro:property name="chassis_mass" value="0.123"/>
     <xacro:property name="base_width" value="0.0879"/>
     <xacro:property name="base_length" value="0.170"/>
-    <xacro:property name="base_height" value="0.064"/>
+    <xacro:property name="base_height" value="0.008"/>
 
     <!-- from blender -->
     <xacro:property name="camera_x" value="0.099737"/>

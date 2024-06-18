@@ -15,7 +15,7 @@
             <geometry>
                 <box size="${battery_length} ${battery_width} ${battery_height}" />
             </geometry>
-            <material name="black" />
+            <material name="grey" />
         </visual>
 
         <inertial name="battery_inertia">

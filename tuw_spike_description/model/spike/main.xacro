@@ -1,22 +1,14 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="spike" >
 
-  <xacro:arg name="models_dir"       default="model"/>
-  <xacro:arg name="robot_model"      default="spike"/>
-  <xacro:arg name="laser_model"      default="hokuyo"/>
   <xacro:arg name="namespace"        default="robot0"/>
-  <xacro:arg name="robot_name"       default="r0"/>
-    
-  <xacro:property name="models_dir"    value="$(arg models_dir)"/>
   <xacro:property name="namespace"    value="$(arg namespace)"/>
-  <xacro:property name="robot_model"   value="$(arg robot_model)"/>
 
   <!-- Import Rviz colors -->
   <xacro:include filename="body/materials.xacro" />
     
   <!-- Import platform -->
   <xacro:include filename="body/body.xacro"/>
-  <!-- <xacro:vehicle_body name="body" parent="base_link"/> -->
   
   <!-- differential drive  and joint stage plugin -->
   <xacro:include filename="body/plugins.xacro"/>

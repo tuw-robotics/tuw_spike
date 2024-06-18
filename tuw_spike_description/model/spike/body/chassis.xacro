@@ -4,16 +4,17 @@
     <!-- Base Link (Chassis) -->
     <link name="base_link">
         <collision>
-            <origin xyz="0 0 ${base_height/2}" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
                 <box size="${base_length} ${base_width} ${base_height}" />
             </geometry>
         </collision>
 
         <visual>
-            <origin xyz="0 0 ${base_height/2}" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <box size="${base_length/10} ${base_width/10} ${base_height/10}" />
+                <box size="${base_length} ${base_width} ${base_height}" />
+                 <!-- <mesh filename="package://tuw_spike_description/model/spike/body/mesh/model_chassis.dae"/> -->
             </geometry>
             <material name="orange" />
         </visual>
