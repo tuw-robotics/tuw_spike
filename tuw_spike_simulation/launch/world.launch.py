@@ -7,7 +7,7 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    tuw_simulation = FindPackageShare("tuw_simulation")
+    tuw_spike_simulation = FindPackageShare("tuw_spike_simulation")
     ros_gz_sim = FindPackageShare("ros_gz_sim") 
     
     # Start simulation
@@ -15,12 +15,12 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([ros_gz_sim, "launch", "gz_sim.launch.py"])),
         launch_arguments={
             # Launch simulation automatically started (-r)
-            "gz_args": [PathJoinSubstitution([tuw_simulation, "world", "empty.sdf"]), TextSubstitution(text=" ")],
+            "gz_args": [PathJoinSubstitution([tuw_spike_simulation, "world", "empty.sdf"]), TextSubstitution(text=" ")],
             "on_exit_shutdown": "True"
         }.items()
     )
     
-    bridge_config = PathJoinSubstitution([tuw_simulation, "world", "tuw_simulation_bridge_clock.yaml"])
+    bridge_config = PathJoinSubstitution([tuw_spike_simulation, "world", "tuw_simulation_bridge_clock.yaml"])
     bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",

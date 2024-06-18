@@ -10,7 +10,7 @@ from launch.conditions import IfCondition, UnlessCondition
 
 
 def generate_launch_description():
-    tuw_spike_description = FindPackageShare("tuw_description")
+    tuw_spike_description = FindPackageShare("tuw_spike_description")
     tuw_spike_control = FindPackageShare("tuw_spike_control")
     # Load controller paramter file
     robot_controllers = PathJoinSubstitution([tuw_spike_control, "config", "controllers.yaml"])

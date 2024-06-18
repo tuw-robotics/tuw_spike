@@ -11,11 +11,11 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
-    tuw_description = FindPackageShare("tuw_description")
+    tuw_spike_description = FindPackageShare("tuw_spike_description")
     
     robot_state_publisher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [tuw_description, "launch", "spike_description.launch.py"]
+            [tuw_spike_description, "launch", "spike_description.launch.py"]
         ))
     )
     
@@ -25,7 +25,7 @@ def generate_launch_description():
             return Shutdown(reason="Could not successfully spawn robot")
     
     spawner = Node(
-        package="tuw_simulation",
+        package="tuw_spike_simulation",
         executable="spawn",
         parameters=[{
             "X": LaunchConfiguration("X"),
@@ -34,8 +34,8 @@ def generate_launch_description():
         on_exit=spawner_exit
     )
      
-    tuw_simulation = FindPackageShare("tuw_simulation")
-    bridge_config = PathJoinSubstitution([tuw_simulation, "world", "tuw_simulation_bridge.yaml"])
+    tuw_spike_simulation = FindPackageShare("tuw_spike_simulation")
+    bridge_config = PathJoinSubstitution([tuw_spike_simulation, "world", "tuw_simulation_bridge.yaml"])
     
     bridge = Node(
         package="ros_gz_bridge",

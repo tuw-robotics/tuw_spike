@@ -13,7 +13,7 @@ def generate_launch_description():
         PathJoinSubstitution([FindExecutable(name="xacro")]),
         " ",
         PathJoinSubstitution([
-            FindPackageShare("tuw_description"),
+            FindPackageShare("tuw_spike_description"),
             "model",
             "spike",
             "main.xacro",

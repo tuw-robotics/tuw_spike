@@ -8,7 +8,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 
 def generate_launch_description():
-    tuw_simulation = FindPackageShare("tuw_simulation")
+    tuw_simulation = FindPackageShare("tuw_spike_simulation")
     
     # Simulation
     simulation_world_launch = IncludeLaunchDescription(
@@ -24,7 +24,7 @@ def generate_launch_description():
 
     # Trajectory Driver
     trajectory_driver = Node(
-        package="tuw_simulation",
+        package="tuw_spike_simulation",
         executable="combined_trajectory.py",
         namespace=[LaunchConfiguration("model_name")]
     )

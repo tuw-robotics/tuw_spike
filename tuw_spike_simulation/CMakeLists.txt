@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(tuw_simulation)
+project(tuw_spike_simulation)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -21,14 +21,11 @@ find_package(ignition-transport8 QUIET REQUIRED OPTIONAL_COMPONENTS log)
 
 add_executable(spawn src/spawn_robot.cpp)
 ament_target_dependencies(spawn PUBLIC rclcpp std_msgs)
-add_executable(reset src/reset_robot.cpp)
-ament_target_dependencies(reset PUBLIC rclcpp std_msgs)
 
-target_link_libraries(reset PUBLIC Boost::boost ignition-transport8::core)
 target_link_libraries(spawn PUBLIC Boost::boost ignition-transport8::core)
 
 install(TARGETS
-  spawn reset
+  spawn
   DESTINATION lib/${PROJECT_NAME})
 
 
@@ -37,8 +34,6 @@ install(DIRECTORY
         DESTINATION share/${PROJECT_NAME}
 )
 
-# Install Python modules
-ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS

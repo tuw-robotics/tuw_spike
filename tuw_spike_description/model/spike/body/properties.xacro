@@ -65,9 +65,5 @@
     <xacro:property name="engine_mass" value="0.045"/>
 
     <xacro:property name="ray_origin_offset" value="0.15"/>
-    
-
-
-
 
 </robot>
