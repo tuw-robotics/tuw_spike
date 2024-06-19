@@ -10,6 +10,8 @@
             <child link="engine_${prefix}"/>
         </joint>
 
+
+
         <link name="engine_${prefix}">              
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0" />
@@ -20,6 +22,14 @@
                     izz="${engine_mass / 12.0 * (engine_width*engine_width + engine_length*engine_length)}"
                     ixy="0.0" ixz="0.0" iyz="0.0" />
             </inertial>
+
+            <visual name="battery_visual">
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${engine_length} ${engine_width} ${engine_height}" />
+                </geometry>
+                <material name="grey" />
+            </visual>
         </link>
     </xacro:macro>
 
