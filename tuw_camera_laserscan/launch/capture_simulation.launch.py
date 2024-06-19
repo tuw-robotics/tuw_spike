@@ -7,7 +7,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
     tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
-    tuw_simulation = FindPackageShare("tuw_simulation")
+    tuw_spike_simulation = FindPackageShare("tuw_spike_simulation")
 
     container_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "container.launch.py"]))
@@ -15,7 +15,7 @@ def generate_launch_description():
 
     simulation_spawn_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [tuw_simulation, "launch", "spawn_robot.launch.py"]
+            [tuw_spike_simulation, "launch", "spawn_robot.launch.py"]
         ))
     )
 

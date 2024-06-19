@@ -1,11 +1,15 @@
-from launch_ros.actions import LoadComposableNodes, PushRosNamespace, SetParameter, Node
+from launch_ros.actions import LoadComposableNodes, PushRosNamespace, SetParameter, Node, LifecycleNode
 from launch_ros.descriptions import ComposableNode, ParameterFile
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction, EmitEvent
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, AndSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, LaunchConfigurationEquals
+from launch_ros.events.lifecycle import ChangeState
+from launch.events.matchers import matches_action
+
+from lifecycle_msgs.msg import Transition
 
 
 def robot_ns_from_hostname():
@@ -14,7 +18,7 @@ def robot_ns_from_hostname():
 
 def generate_launch_description():
     tuw_camera_laserscan = FindPackageShare("tuw_camera_laserscan")
-    tuw_simulation = FindPackageShare("tuw_simulation")
+    tuw_spike_simulation = FindPackageShare("tuw_spike_simulation")
     tuw_spike_control = FindPackageShare("tuw_spike_control")
     tuw_spike_analysis = FindPackageShare("tuw_spike_analysis")
 
@@ -25,7 +29,7 @@ def generate_launch_description():
     # Simulation captrue
     simulation_world_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [tuw_simulation, "launch", "world.launch.py"]
+            [tuw_spike_simulation, "launch", "world.launch.py"]
         )),
         condition=source_sim
     )
@@ -96,9 +100,9 @@ def generate_launch_description():
         executable="trajectory_est_recorder"
     )
 
-    trajectory_sim_recoder = Node(
+    trajectory_true_recoder = Node(
         package="tuw_spike_analysis",
-        executable="trajectory_sim_recorder",
+        executable="trajectory_true_recorder",
         condition=source_sim
     )
 
@@ -132,7 +136,7 @@ def generate_launch_description():
             GroupAction([
                 trajectory_driver,
                 trajectory_est_recoder,
-                trajectory_sim_recoder,
-            ], condition=IfCondition(LaunchConfiguration("trajectory")))
+                trajectory_true_recoder,
+            ], condition=IfCondition(LaunchConfiguration("trajectory"))),
         ])
     ])
