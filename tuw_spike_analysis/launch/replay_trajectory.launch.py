@@ -29,7 +29,7 @@ def generate_launch_description():
     replay = ExecuteProcess(
         cmd=[
             'ros2', 'bag', 'play',
-            'bags/trajectory_combined',
+            'bags/trajectory02/combined',
             '--remap',
             *(
                 [topic, ":=", LaunchConfiguration("ros_namespace"), topic]
@@ -37,7 +37,8 @@ def generate_launch_description():
                     "/camera/image",
                     "/camera/camera_info",
                     "/tf",
-                    "/tf_static"
+                    "/tf_static",
+                    "/odom_ground_truth"
                 )
             ),
             '-r', LaunchConfiguration("rate"),

@@ -2,10 +2,10 @@ from launch_ros.actions import LoadComposableNodes, PushRosNamespace, SetParamet
 from launch_ros.descriptions import ComposableNode, ParameterFile
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction, EmitEvent
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, AndSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition, LaunchConfigurationEquals
+from launch.conditions import IfCondition, LaunchConfigurationEquals, LaunchConfigurationNotEquals
 from launch_ros.events.lifecycle import ChangeState
 from launch.events.matchers import matches_action
 
@@ -25,6 +25,8 @@ def generate_launch_description():
     source_hw = LaunchConfigurationEquals("source", "hardware")
     source_sim = LaunchConfigurationEquals("source", "simulation")
     source_bag = LaunchConfigurationEquals("source", "bag")
+    source_not_hw = LaunchConfigurationNotEquals("source", "hardware")
+    source_not_bag = LaunchConfigurationNotEquals("source", "bag")
 
     # Simulation captrue
     simulation_world_launch = IncludeLaunchDescription(
@@ -90,9 +92,10 @@ def generate_launch_description():
         package="tuw_spike_analysis",
         executable="trajectory_driver",
         parameters=[{
-            "velocity": 0.05,
+            "velocity": 0.1,
             "startup_delay": 5.0
-        }]
+        }],
+        condition=source_not_bag
     )
 
     trajectory_est_recoder = Node(
@@ -103,7 +106,7 @@ def generate_launch_description():
     trajectory_true_recoder = Node(
         package="tuw_spike_analysis",
         executable="trajectory_true_recorder",
-        condition=source_sim
+        condition=source_not_hw
     )
 
     return LaunchDescription([
@@ -113,7 +116,7 @@ def generate_launch_description():
         DeclareLaunchArgument("robot_ns", default_value=robot_ns_from_hostname()),
         DeclareLaunchArgument("trajectory", default_value="False"),
         SetParameter("use_sim_time", True, condition=source_sim),
-        SetParameter("use_sim_time", True, condition=source_hw),
+        SetParameter("use_sim_time", True, condition=source_bag),
         # Launch simulation world
         simulation_world_launch,
         GroupAction([

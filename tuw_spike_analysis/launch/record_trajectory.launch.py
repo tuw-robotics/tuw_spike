@@ -32,8 +32,8 @@ def generate_launch_description():
         package="tuw_spike_analysis",
         executable="trajectory_driver",
         parameters=[{
-            "velocity": 0.05,
-            "startup_delay": 10.0
+            "velocity": 0.1,
+            "startup_delay": 5.0
         }],
         condition=IfCondition(trajectory)
     )

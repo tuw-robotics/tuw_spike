@@ -4,7 +4,7 @@
     num_rays: 200
     debug_img_size: 1280
     debug_real_size: 0.6
-    edge_enter_threshold: 4000
-    edge_exit_threshold: 5000
+    edge_enter_threshold: 2000
+    edge_exit_threshold: 2000
     edge_min_width: 0.03
     edge_max_width: 0.06
