@@ -49,6 +49,8 @@ class TuwSpikeSystemInterface : public hardware_interface::SystemInterface {
 
     std::vector<bool> reverse;
 
+    uint8_t left_wheel_port, right_wheel_port;
+
 };
 
 } // namespace tuw_spike_control

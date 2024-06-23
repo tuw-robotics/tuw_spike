@@ -6,7 +6,7 @@
                 <plugin>tuw_spike_control/TuwSpikeSystemInterface</plugin>
             </hardware>
             <joint name="left_wheel_joint">
-                <param name="Port">2</param>
+                <param name="Port">1</param>
                 <param name="reverse">true</param>
                 <command_interface name="velocity">
                     <param name="min">-2.5</param>
@@ -17,7 +17,7 @@
                 <state_interface name="velocity"/>
             </joint>
             <joint name="right_wheel_joint">
-                <param name="Port">3</param>
+                <param name="Port">0</param>
                 <command_interface name="velocity">
                     <param name="min">-2.5</param>
                     <param name="max">+2.5</param>

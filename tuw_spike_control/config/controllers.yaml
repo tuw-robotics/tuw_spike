@@ -19,6 +19,7 @@
     wheel_radius: 0.028
     wheel_separation: 0.112
     enable_odom_tf: true
+    # use_stamped_vel: false
     tf_frame_prefix_enable: false
     base_frame_id: "base_odom"
 

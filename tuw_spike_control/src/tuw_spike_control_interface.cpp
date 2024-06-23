@@ -55,6 +55,9 @@ TuwSpikeSystemInterface::on_init(const HardwareInfo &hardware_info) {
 
         reverse.push_back(read_param<bool>(hardware_info.joints[0], "reverse", false));
         reverse.push_back(read_param<bool>(hardware_info.joints[1], "reverse", false));
+        left_wheel_port = read_param<uint8_t>(hardware_info.joints[0], "Port", 1);
+        right_wheel_port = read_param<uint8_t>(hardware_info.joints[1], "Port", 0);
+
 
         command_motor_velocity.push_back(0.0);
         command_motor_velocity.push_back(0.0);
@@ -105,12 +108,12 @@ return_type TuwSpikeSystemInterface::read(const rclcpp::Time &time,
     (void)time;
     (void)period;
 
-    std::string p2_str = "P2C0";
-    std::string p3_str = "P3C0";
-    int p2_speed = INT32_MAX;
-    int p2_apos = INT32_MAX;
-    int p3_speed = INT32_MAX;
-    int p3_apos = INT32_MAX;
+    std::string left_port_str = "P" + std::to_string(left_wheel_port) + "C0";
+    std::string right_port_str = "P" + std::to_string(right_wheel_port) + "C0";
+    int left_wheel_speed = INT32_MAX;
+    int left_wheel_apos = INT32_MAX;
+    int right_wheel_speed = INT32_MAX;
+    int right_wheel_apos = INT32_MAX;
 
     // Buffer to store incoming data
     std::vector<char> buffer(128);  // Adjust size as needed
@@ -145,27 +148,27 @@ return_type TuwSpikeSystemInterface::read(const rclcpp::Time &time,
                             std::string apos = current.substr(second_space + 1, third_space - second_space - 1);
 
                             if (speed.size() > 0 && apos.size() > 0) {
-                                if (!substring.compare(p2_str)) {
+                                if (!substring.compare(left_port_str)) {
                                     try {
-                                        p2_speed = std::stoi(speed);
+                                        left_wheel_speed = std::stoi(speed);
                                     } catch (std::invalid_argument const& e) {
-                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing speed_2: %s", e.what());
+                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing speed_left: %s", e.what());
                                     }
                                     try {
-                                        p2_apos = std::stoi(apos);
+                                        left_wheel_apos = std::stoi(apos);
                                     } catch (std::invalid_argument const& e) {
-                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing pos_2: %s", e.what());
+                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing pos_left: %s", e.what());
                                     }
-                                } else if (!substring.compare(p3_str)) {
+                                } else if (!substring.compare(right_port_str)) {
                                     try {
-                                        p3_speed = std::stoi(speed);
+                                        right_wheel_speed = std::stoi(speed);
                                     } catch (std::invalid_argument const& e) {
-                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing speed_3: %s", e.what());
+                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing speed_right: %s", e.what());
                                     }
                                     try {
-                                        p3_apos = std::stoi(apos);
+                                        right_wheel_apos = std::stoi(apos);
                                     } catch (std::invalid_argument const& e) {
-                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing pos_3: %s", e.what());
+                                        RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing pos_right: %s", e.what());
                                     }
                                 }
                             }
@@ -179,22 +182,22 @@ return_type TuwSpikeSystemInterface::read(const rclcpp::Time &time,
         }
     }
     if (reverse[0]) {
-        p2_apos = -p2_apos;
-        p2_speed = -p2_speed; 
+        left_wheel_apos = -left_wheel_apos;
+        left_wheel_speed = -left_wheel_speed; 
     }
     if (reverse[1]) {
-        p3_apos = -p3_apos;
-        p3_speed = -p3_speed;
+        right_wheel_apos = -right_wheel_apos;
+        right_wheel_speed = -right_wheel_speed;
     }
-    if (abs(p2_speed) != INT32_MAX) {
-        // new values read from port 2
-        state_motor_velocity[0] = 2.0 * M_PI * p2_speed / 33;
-        state_motor_position[0] = 1.0 * p2_apos / 180.0 * M_PI; 
+    if (abs(left_wheel_speed) != INT32_MAX) {
+        // new values read from left wheel
+        state_motor_velocity[0] = 2.0 * M_PI * left_wheel_speed / 33;
+        state_motor_position[0] = 1.0 * left_wheel_apos / 180.0 * M_PI; 
     }
-    if (abs(p3_speed) != INT32_MAX) {
-        // new values read from port 3
-        state_motor_velocity[1] = 2.0 * M_PI * p3_speed / 33;
-        state_motor_position[1] = 1.0 * p3_apos / 180.0 * M_PI;
+    if (abs(right_wheel_speed) != INT32_MAX) {
+        // new values read from right wheel
+        state_motor_velocity[1] = 2.0 * M_PI * right_wheel_speed / 33;
+        state_motor_position[1] = 1.0 * right_wheel_apos / 180.0 * M_PI;
     }
 
     return return_type::OK;
@@ -215,7 +218,7 @@ return_type TuwSpikeSystemInterface::write(const rclcpp::Time &time,
         velocity_right = -velocity_right;
     }
 
-    std::string message = "port 2; set " +  std::to_string(velocity_left / (2*M_PI)) + "; port 3; set " +  std::to_string(velocity_right / (2*M_PI)) + ";\r";
+    std::string message = "port " + std::to_string(left_wheel_port) + "; set " +  std::to_string(velocity_left / (2*M_PI)) + "; port " + std::to_string(right_wheel_port) + "; set " +  std::to_string(velocity_right / (2*M_PI)) + ";\r";
     boost::asio::write(serial, boost::asio::buffer(message)); 
 
     return return_type::OK;
@@ -237,10 +240,10 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
   
         std::string cmd = "echo 0;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
-        cmd = "plimit 1; port 2; combi 0 1 0 2 0 3 0; select 0 ; selrate 10; pid_diff 2 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
+        cmd = "plimit 1; port " + std::to_string(left_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0 ; selrate 10; pid_diff " + std::to_string(left_wheel_port) + " 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        cmd = "port 3; combi 0 1 0 2 0 3 0; select 0; selrate 10; pid_diff 3 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
+        cmd = "port " + std::to_string(right_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0; selrate 10; pid_diff " + std::to_string(right_wheel_port) + " 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
     
     } catch (std::runtime_error &e) {
@@ -257,7 +260,7 @@ CallbackReturn TuwSpikeSystemInterface::on_cleanup(
     const rclcpp_lifecycle::State &previous_state) {
     (void)previous_state;
     // end select
-    std::string end_message = "port 2; select; set 0; port 3; select; set 0;\r";
+    std::string end_message = "port " + std::to_string(left_wheel_port) + "; select; set 0; port " + std::to_string(right_wheel_port) + "; select; set 0;\r";
     boost::asio::write(serial, boost::asio::buffer(end_message)); 
 
     // Close serial port

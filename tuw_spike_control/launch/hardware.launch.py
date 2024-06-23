@@ -23,7 +23,7 @@ def generate_launch_description():
         output="both",
         remappings=[
             ('controller_manager/robot_description', 'robot_description'),
-            ('controller_diff_drive/cmd_vel', 'cmd_vel'),
+            ('controller_diff_drive/cmd_vel', 'cmd_vel'),   #   ('controller_diff_drive/cmd_vel_unstamped', 'cmd_vel_unstamped'),
             ('controller_diff_drive/odom', 'odom'),
             ('/tf', 'tf'),
             ('/tf_static', 'tf_static')
