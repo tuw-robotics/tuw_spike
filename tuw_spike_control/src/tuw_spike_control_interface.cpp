@@ -192,12 +192,12 @@ return_type TuwSpikeSystemInterface::read(const rclcpp::Time &time,
     if (abs(left_wheel_speed) != INT32_MAX) {
         // new values read from left wheel
         state_motor_velocity[0] = 2.0 * M_PI * left_wheel_speed / 33;
-        state_motor_position[0] = 1.0 * left_wheel_apos / 180.0 * M_PI; 
+        state_motor_position[0] = 1.0 * (left_wheel_apos-(left_wheel_offset)) / 180.0 * M_PI; 
     }
     if (abs(right_wheel_speed) != INT32_MAX) {
         // new values read from right wheel
         state_motor_velocity[1] = 2.0 * M_PI * right_wheel_speed / 33;
-        state_motor_position[1] = 1.0 * right_wheel_apos / 180.0 * M_PI;
+        state_motor_position[1] = 1.0 * (right_wheel_apos-(right_wheel_offset)) / 180.0 * M_PI;
     }
 
     return return_type::OK;
@@ -245,6 +245,70 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         cmd = "port " + std::to_string(right_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0; selrate 10; pid_diff " + std::to_string(right_wheel_port) + " 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+        std::string left_port_str = "P" + std::to_string(left_wheel_port) + "C0";
+        std::string right_port_str = "P" + std::to_string(right_wheel_port) + "C0";
+        // Buffer to store incoming data
+        std::vector<char> buffer(128);  // Adjust size as needed
+        // Read data from serial port
+        boost::system::error_code error;
+        
+        std::size_t bytes_read = 128;
+
+        while(bytes_read == 128) {
+            bytes_read = serial.read_some(boost::asio::buffer(buffer), error);
+
+            std::string current;
+            if (error) {
+                std::cerr << "Error reading from serial port: " << error.message() << std::endl;
+            } else {
+                // process buffer
+                for (char c : buffer) {
+                    if (c == '\n') {
+                        // line complete: check for completeness
+                        if (current.size() >= 5) {
+                            // newer info possibly available
+                            auto first_space = current.find(' ');
+                            auto second_space = current.find(' ', first_space + 2);
+                            auto third_space = current.find(' ', second_space + 2);
+
+                            if (first_space != std::string::npos && second_space != std::string::npos && third_space != std::string::npos) {
+                                // Extract substring between the first and second space
+                                std::string substring = current.substr(0, 4);
+                                std::string apos = current.substr(second_space + 1, third_space - second_space - 1);
+
+                                if (apos.size() > 0) {
+                                    if (!substring.compare(left_port_str)) {
+                                        try {
+                                            left_wheel_offset = std::stoi(apos);
+                                        } catch (std::invalid_argument const& e) {
+                                            RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing pos_left: %s", e.what());
+                                        }
+                                    } else if (!substring.compare(right_port_str)) {
+                                        try {
+                                            right_wheel_offset = std::stoi(apos);
+                                        } catch (std::invalid_argument const& e) {
+                                            RCUTILS_LOG_ERROR_NAMED(TAG, "Error parsing pos_right: %s", e.what());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        current.clear();
+                    } else {
+                        current += c;
+                    }
+                }
+            }
+        }
+        if (reverse[0]) {
+            left_wheel_offset = -left_wheel_offset;
+        }
+        if (reverse[1]) {
+            right_wheel_offset = -right_wheel_offset;
+        }
     
     } catch (std::runtime_error &e) {
         RCUTILS_LOG_ERROR_NAMED(TAG, "Error configuring hardware: %s",

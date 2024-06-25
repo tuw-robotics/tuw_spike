@@ -51,6 +51,8 @@ class TuwSpikeSystemInterface : public hardware_interface::SystemInterface {
 
     uint8_t left_wheel_port, right_wheel_port;
 
+    int left_wheel_offset = 0, right_wheel_offset = 0;
+
 };
 
 } // namespace tuw_spike_control
