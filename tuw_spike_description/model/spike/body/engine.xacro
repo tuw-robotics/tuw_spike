@@ -23,13 +23,17 @@
                     ixy="0.0" ixz="0.0" iyz="0.0" />
             </inertial>
 
-            <visual name="battery_visual">
-                <origin xyz="0 0 0" rpy="0 0 0" />
-                <geometry>
-                    <box size="${engine_length} ${engine_width} ${engine_height}" />
-                </geometry>
-                <material name="grey" />
-            </visual>
+            <xacro:unless value="${mesh_property}">
+                <visual name="battery_visual">
+                    <origin xyz="0 0 0" rpy="0 0 0" />
+                    <geometry>
+                        <box size="${engine_length} ${engine_width} ${engine_height}" />
+                    </geometry>
+                    <material name="grey" />
+                </visual>
+            </xacro:unless>
+
+
         </link>
     </xacro:macro>
 

@@ -19,7 +19,9 @@ def generate_launch_description():
             "main.xacro",
         ]),
         " namespace:=",
-        LaunchConfiguration("ros_namespace")
+        LaunchConfiguration("ros_namespace"),
+        " mesh:=",
+        LaunchConfiguration("mesh")
     ])
     
     robot_state_publisher = Node(
@@ -37,5 +39,6 @@ def generate_launch_description():
     
     return LaunchDescription([
         DeclareLaunchArgument("ros_namespace",  default_value=""),
+        DeclareLaunchArgument("mesh",  default_value="false"),
         robot_state_publisher
     ])

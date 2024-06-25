@@ -13,10 +13,14 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <box size="${base_length} ${base_width} ${base_height}" />
-                 <!-- <mesh filename="package://tuw_spike_description/model/spike/body/mesh/model_chassis.dae"/> -->
+                <xacro:if value="${mesh_property}">
+                    <mesh filename="package://tuw_spike_description/model/spike/body/mesh/model_chassis.dae"/>
+                </xacro:if>
+                <xacro:unless value="${mesh_property}">
+                    <box size="${base_length} ${base_width} ${base_height}" />
+                </xacro:unless>
+                 
             </geometry>
-            <material name="orange" />
         </visual>
 
         <inertial name="base_link_inertia">

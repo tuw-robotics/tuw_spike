@@ -15,7 +15,7 @@
             <geometry>
                 <box size="${pi_length} ${pi_width} ${pi_height}" />
             </geometry>
-            <material name="grey" />
+            <material name="green" />
         </visual>
 
         <inertial name="pi_inertia">
