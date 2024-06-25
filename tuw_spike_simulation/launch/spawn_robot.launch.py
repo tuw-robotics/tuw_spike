@@ -50,7 +50,6 @@ def generate_launch_description():
         DeclareLaunchArgument("ros_namespace", default_value=""),
         DeclareLaunchArgument("X", default_value="0.0"),
         DeclareLaunchArgument("Y", default_value="0.0"),
-        DeclareLaunchArgument("mesh", default_value="false"),
         SetParameter("use_sim_time", True),
         robot_state_publisher,
         bridge,
