@@ -27,6 +27,8 @@ setup(
             'trajectory_est_recorder = tuw_spike_analysis.trajectory_est_recorder:main',
             'trajectory_true_recorder = tuw_spike_analysis.trajectory_true_recorder:main',
             'optitrack_to_odom = tuw_spike_analysis.optitrack_to_odom:main',
+            'optitrack_to_tf = tuw_spike_analysis.optitrack_to_tf:main',
+            'tf_to_odom = tuw_spike_analysis.tf_to_odom:main',
             'combined_trajectory = tuw_spike_analysis.simulation_scripts.combined_trajectory:main',
             'curve_trajectory = tuw_spike_analysis.simulation_scripts.curve_trajectory:main',
             'line_trajectory = tuw_spike_analysis.simulation_scripts.line_trajectory:main',

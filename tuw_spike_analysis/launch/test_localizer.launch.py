@@ -87,6 +87,11 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(PathJoinSubstitution([tuw_camera_laserscan, "launch", "amcl.launch.py"]))
     )
 
+    tf_to_odom = Node(
+        package="tuw_spike_analysis",
+        executable="tf_to_odom"
+    )
+
     # Trajectory driver and recording
     trajectory_driver = Node(
         package="tuw_spike_analysis",
@@ -141,5 +146,6 @@ def generate_launch_description():
                 trajectory_est_recoder,
                 trajectory_true_recoder,
             ], condition=IfCondition(LaunchConfiguration("trajectory"))),
+            tf_to_odom,
         ])
     ])
