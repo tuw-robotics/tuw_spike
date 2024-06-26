@@ -26,6 +26,7 @@ setup(
             'trajectory_driver = tuw_spike_analysis.trajectory_driver:main',
             'trajectory_est_recorder = tuw_spike_analysis.trajectory_est_recorder:main',
             'trajectory_true_recorder = tuw_spike_analysis.trajectory_true_recorder:main',
+            'trajectory_odom_recorder = tuw_spike_analysis.trajectory_odom_recorder:main',
             'optitrack_to_odom = tuw_spike_analysis.optitrack_to_odom:main',
             'optitrack_to_tf = tuw_spike_analysis.optitrack_to_tf:main',
             'tf_to_odom = tuw_spike_analysis.tf_to_odom:main',

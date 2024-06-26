@@ -114,6 +114,11 @@ def generate_launch_description():
         condition=source_not_hw
     )
 
+    trajectory_odom_recoder = Node(
+        package="tuw_spike_analysis",
+        executable="trajectory_odom_recorder"
+    )
+
     return LaunchDescription([
         # Arguments
         DeclareLaunchArgument("debug", default_value="False"),
@@ -145,6 +150,7 @@ def generate_launch_description():
                 trajectory_driver,
                 trajectory_est_recoder,
                 trajectory_true_recoder,
+                trajectory_odom_recoder
             ], condition=IfCondition(LaunchConfiguration("trajectory"))),
             tf_to_odom,
         ])
