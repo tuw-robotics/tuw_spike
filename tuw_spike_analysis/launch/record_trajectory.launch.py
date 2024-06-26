@@ -47,7 +47,8 @@ def generate_launch_description():
             '/tf_static',
             '/joint_states',
             '/dynamic_joint_states',
-            '/controller_diff_drive/odom'
+            '/odom',
+            '/odom_ground_truth'
         ],
         name='rosbag',
         output='both'
