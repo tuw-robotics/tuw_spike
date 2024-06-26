@@ -21,7 +21,7 @@ class OptitrackToOdom(Node):
             odom.header.frame_id = "map"
             odom.header.stamp = msg.header.stamp
             odom.pose.pose = body.pose
-            odom.pose.pose.position.z = 0
+            odom.pose.pose.position.z = 0.0
             self.pub.publish(odom)
         
 def main(args=None):
