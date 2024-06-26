@@ -41,12 +41,12 @@ class RequestHandler : public rclcpp::Waitable {
         std::unique_ptr<libcamera::Request> request;
         uint32_t control_seq{};
         bool waiting{};
-        rclcpp::Time stamp{};
     };
 
     rclcpp::GuardCondition::SharedPtr gc;
     rclcpp::Logger logger;
     rclcpp::Clock::SharedPtr clock;
+    std::chrono::nanoseconds time_offset;
     std::shared_ptr<libcamera::Camera> camera;
     std::string frame_id;
 

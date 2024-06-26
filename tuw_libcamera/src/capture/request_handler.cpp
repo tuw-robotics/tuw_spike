@@ -1,6 +1,7 @@
 #include "tuw_libcamera/request_handler.hpp"
 #include "rcutils/logging_macros.h"
 #include <thread>
+#include <chrono>
 
 namespace tuw_libcamera {
 
@@ -31,6 +32,16 @@ RequestHandler::RequestHandler(rclcpp::Node *node,
         controls_handler->update_request(ctx.request->controls(),
                                          &ctx.control_seq, true);
     }
+
+    // The buffer timestamps are based on ktime_get_ns() in the kernel driver which is passed onto libcamera:
+    // https://github.com/raspberrypi/linux/blob/rpi-6.6.y/drivers/media/platform/bcm2835/bcm2835-unicam.c#L1010
+    // ktime_get_ns returns monotonic time: https://docs.kernel.org/core-api/timekeeping.html
+    // The user-space equivalent is clock_gettime(CLOCK_MONOTONIC),
+    // in c++ this is abstracted by std::chrono::steady_clock.
+    // So we need to determine the offset between std::chrono::steady_clock and ROS time.
+    std::chrono::nanoseconds steady = std::chrono::steady_clock::now().time_since_epoch();
+    std::chrono::nanoseconds ros_time{node->get_clock()->now().nanoseconds()};
+    time_offset = ros_time - steady;
 }
 
 void RequestHandler::add_stream(libcamera::Stream *stream,
@@ -77,7 +88,6 @@ void RequestHandler::handle(libcamera::Request *request) {
     auto &ctx = request_ctx.at(request->cookie());
     if (ctx.waiting)
         throw std::runtime_error("assertion failed: request not processed");
-    ctx.stamp = clock->now();
     ctx.waiting = true;
     waiting_requests++;
     gc->trigger();
@@ -94,24 +104,26 @@ void RequestHandler::execute(std::shared_ptr<void> &data) {
             RCLCPP_DEBUG_STREAM(logger, "Handle completed request "
                                             << ctx.request->cookie()
                                             << " on thread: "
-                                            << std::this_thread::get_id()
-                                            << " with stamp: "
-                                            << (long)(ctx.stamp.seconds()*1e6));
+                                            << std::this_thread::get_id());
 
             std_msgs::msg::Header header;
-            header.stamp = ctx.stamp;
             header.frame_id = frame_id;
             for (auto [stream, buffer] : ctx.request->buffers()) {
+                int64_t timestamp = time_offset.count() + static_cast<int64_t>(buffer->metadata().timestamp);
+                header.stamp = rclcpp::Time(timestamp);
                 auto &ctx = buffer_ctx.at(buffer->cookie());
                 stream_handlers.at(ctx.stream_idx())
                     ->publish_buffer(ctx, header);
             }
 
+            int64_t delay_ms = (clock->now() - rclcpp::Time(header.stamp)).nanoseconds() / 1'000'000;
             RCLCPP_DEBUG_STREAM(logger, "Published completed request "
-                                            << ctx.request->cookie());
+                                            << ctx.request->cookie()
+                                            << " with processing delay "
+                                            << delay_ms << "ms");
 
             if (callback) {
-                callback(ctx.stamp);
+                callback(header.stamp);
             }
 
             ctx.request->reuse(libcamera::Request::ReuseBuffers);
