@@ -29,7 +29,7 @@ def generate_launch_description():
     replay = ExecuteProcess(
         cmd=[
             'ros2', 'bag', 'play',
-            'bags/trajectory02/combined',
+            LaunchConfiguration('bag'),
             '--remap',
             *(
                 [topic, ":=", LaunchConfiguration("ros_namespace"), topic]
@@ -52,6 +52,7 @@ def generate_launch_description():
         DeclareLaunchArgument("ros_namespace", default_value=""),
         DeclareLaunchArgument("rectify", default_value="True"),
         DeclareLaunchArgument("rate", default_value="1.0"),
+        DeclareLaunchArgument("bag", default_value="bags/trajectory03/combined"),
         replay,
         container_launch,
         LoadComposableNodes(
