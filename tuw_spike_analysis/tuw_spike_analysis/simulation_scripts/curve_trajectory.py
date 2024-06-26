@@ -23,9 +23,9 @@ class Curve_Trajectory(Node):
         self.sub_odom = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
         self.sub_ground_truth = self.create_subscription(Odometry, "odom_ground_truth", self.ground_truth_callback, 10)
 
-        self.velocity = self.declare_parameter("velocity", 0.5).get_parameter_value().double_value
+        self.velocity = self.declare_parameter("velocity", 0.3).get_parameter_value().double_value
         self.delay = self.declare_parameter("delay", 1.0).get_parameter_value().double_value
-        self.radius = self.declare_parameter("radius", 0.5).get_parameter_value().double_value
+        self.radius = self.declare_parameter("radius", 0.15).get_parameter_value().double_value
         
         self.toggle_time = -self.delay
         self.time = -self.delay
@@ -49,7 +49,7 @@ class Curve_Trajectory(Node):
         self.get_logger().info(f"velocity: {twist.twist.linear.x}, angular: {twist.twist.angular.z}, time: {self.time:.2f}, toggle_time: {self.toggle_time:.2f}")
         self.pub_vel.publish(twist)
         self.time += math.pi / 100
-        self.toggle_time += math.pi / 100
+        self.toggle_time += math.pi / 100 * 2
         
     def ground_truth_callback(self, msg: Odometry):
         self.write_pos(msg, self.f_ground_truth)
