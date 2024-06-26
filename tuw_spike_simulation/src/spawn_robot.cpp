@@ -31,8 +31,7 @@ int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
 
     auto node = std::make_shared<rclcpp::Node>("robot_spawner");
-    auto sub = node->create_subscription<std_msgs::msg::String>("robot_description", 10, read_description);
-    
+    auto sub = node->create_subscription<std_msgs::msg::String>("robot_description", rclcpp::QoS(10).transient_local().reliable(), read_description);    
     while (!robot_description) {
         rclcpp::spin_some(node);
         rclcpp::sleep_for(10ms);
@@ -59,12 +58,11 @@ int main(int argc, char *argv[]) {
     ignition::msgs::Empty req;
 
     bool result;
-    bool r = node_ign.Request("/world/plain_world/scene/info", req, 20000, res, result);
+    bool r = node_ign.Request("/world/plain_world/scene/info", req, 2000, res, result);
     if (r) {
         if (result) {
             for (int i = 0; i < res.model_size(); i++) {
                 auto tmp = res.model(i).name();
-                //RCLCPP_INFO(node->get_logger(), "%s", tmp.c_str());
                 if (name.compare(tmp) == 0) {
                     RCLCPP_INFO(node->get_logger(), "model already exists");
                     exists = true;
@@ -89,7 +87,7 @@ int main(int argc, char *argv[]) {
         req_c.mutable_pose()->mutable_position()->set_y(y);
         req_c.mutable_pose()->mutable_position()->set_z(z);
         bool executed =
-            node_ign.Request("/world/plain_world/create", req_c, 20000, res_c, result);
+            node_ign.Request("/world/plain_world/create", req_c, 2000, res_c, result);
         if (executed) {
             if (result) {
                 std::cerr << "Entity was created : [" << res_c.data() << "]"
