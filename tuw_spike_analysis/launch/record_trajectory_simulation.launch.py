@@ -41,7 +41,12 @@ def generate_launch_description():
     # Trajectory Driver
     trajectory_driver = Node(
         package="tuw_spike_analysis",
-        executable="curve_trajectory"
+        executable="curve_trajectory",
+        parameters=[{
+                "velocity": 0.3,
+                "radius": 0.15,
+                "delay" : 1.0,
+            }]
     )
     
     record = ExecuteProcess(
