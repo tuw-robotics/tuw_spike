@@ -31,7 +31,7 @@ setup(
             'optitrack_to_tf = tuw_spike_analysis.optitrack_to_tf:main',
             'tf_to_odom = tuw_spike_analysis.tf_to_odom:main',
             'extrinsic_calibration = tuw_spike_analysis.extrinsic_calibration:main',
-            'round_square_trajectory = tuw_spike_analysis.simulation_scripts.round_sqaure_trajectory:main',
+            'round_square_trajectory = tuw_spike_analysis.simulation_scripts.round_square_trajectory:main',
             'curve_trajectory = tuw_spike_analysis.simulation_scripts.curve_trajectory:main',
             'line_trajectory = tuw_spike_analysis.simulation_scripts.line_trajectory:main',
             'circle_trajectory = tuw_spike_analysis.simulation_scripts.circle_trajectory:main',
