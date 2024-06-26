@@ -1,11 +1,9 @@
-from launch_ros.actions import LoadComposableNodes, PushRosNamespace, SetParameter, Node
-from launch_ros.descriptions import ComposableNode
+from launch_ros.actions import PushRosNamespace, SetParameter, Node
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, GroupAction
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, OrSubstitution
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, ExecuteProcess
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition, UnlessCondition
 
 def robot_ns_from_hostname():
     import socket
@@ -31,6 +29,23 @@ def generate_launch_description():
         package="tuw_spike_analysis",
         executable="combined_trajectory"
     )
+    
+    record = ExecuteProcess(
+        cmd=[
+            'ros2', 'bag', 'record',
+            *(
+                [LaunchConfiguration("robot_ns"), topic]
+                for topic in (
+                    "/tf",
+                    "/tf_static",
+                    "/odom_ground_truth",
+                    '/odom'
+                )
+            ),
+        ],
+        name='rosbag',
+        output='both'
+    )
 
     return LaunchDescription([
         # Arguments
@@ -41,5 +56,6 @@ def generate_launch_description():
         simulation_world_launch,
         TimerAction(period=5.0, actions=[simulation_spawn_launch]),
         # Robot Namespace
-        trajectory_driver
+        trajectory_driver,
+        record
     ])

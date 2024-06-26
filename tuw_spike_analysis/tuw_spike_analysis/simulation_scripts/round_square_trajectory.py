@@ -9,9 +9,9 @@ from rclpy.time import Time
 import math
 
 
-class Combined_Trajectory(Node):
+class round_square_Trajectory(Node):
     def __init__(self, ground_truth: TextIO, odom: TextIO) -> None:
-        super().__init__('Combined_Trajectory')
+        super().__init__('round_square_Trajectory')
         
         self.f_ground_truth = ground_truth
         self.f_odom = odom
@@ -22,13 +22,15 @@ class Combined_Trajectory(Node):
         self.pub_vel = self.create_publisher(TwistStamped, "cmd_vel", 10)
         self.sub_odom = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
         self.sub_ground_truth = self.create_subscription(Odometry, "odom_ground_truth", self.ground_truth_callback, 10)
-        
+
         self.velocity = self.declare_parameter("velocity", 0.5).get_parameter_value().double_value
         self.delay = self.declare_parameter("delay", 1.0).get_parameter_value().double_value
         self.radius = self.declare_parameter("radius", 0.5).get_parameter_value().double_value
         
+        self.time_straight = 0.0
+        self.time_curve = 0.0
         self.time = -self.delay
-        self.toggle_time = -self.delay
+        self.straight = True
         
         self.delay_timer = self.create_timer(math.pi / 100, self.delay_timer_callback)
         self.delay_timer_callback()
@@ -37,24 +39,27 @@ class Combined_Trajectory(Node):
     def delay_timer_callback(self):
         twist = TwistStamped()
         
-        if self.time >= 0.0 and self.time < 1.0:
-            twist.twist.linear.x = self.velocity/4
-            self.get_logger().info(f"below 1s")
-        elif self.time >= 1.0 and self.time < 2.0:
-            self.get_logger().info(f"below 2s")
-            twist.twist.linear.x = self.velocity
-        elif self.time >= 2.0:
-            self.get_logger().info(f"greater 2s")
-            if self.toggle_time >= math.pi:
-                self.radius *= -1
-                self.toggle_time = 0.0
-            twist.twist.linear.x = self.velocity
-            twist.twist.angular.z = self.velocity / self.radius        
         
-        self.get_logger().info(f"velocity: {twist.twist.linear.x}, angular: {twist.twist.angular.z}, time: {self.time:.2f}")
+        if self.time >= 0.0:
+            twist.twist.linear.x = self.velocity
+            if self.straight:
+                if  self.time_straight >= 1.0:
+                    self.straight = False
+                    self.time_straight = 0.0
+                else:
+                    self.time_straight += math.pi / 100
+            else:
+                twist.twist.angular.z = self.velocity / self.radius
+                if self.time_curve >= math.pi / 2:
+                    self.straight = True
+                    self.time_curve = 0.0
+                    twist.twist.angular.z = 0.0
+                else:
+                    self.time_curve += math.pi /100          
+        
+        self.get_logger().info(f"velocity: {twist.twist.linear.x}, angular: {twist.twist.angular.z}, time: {self.time:.2f}, time_straight: {self.time_straight:.2f}, time_curve: {self.time_curve:.2f}")
         self.pub_vel.publish(twist)
         self.time += math.pi / 100
-        self.toggle_time += math.pi / 100
         
     def ground_truth_callback(self, msg: Odometry):
         self.write_pos(msg, self.f_ground_truth)
@@ -76,7 +81,7 @@ def main(args=None):
     
     with open("ground_truth.csv", "w") as ground_truth, open("odom.csv", "w") as odom:
         rclpy.init(args=args)
-        rclpy.spin(Combined_Trajectory(ground_truth, odom))
+        rclpy.spin(round_square_Trajectory(ground_truth, odom))
         rclpy.shutdown()
 
 if __name__ == '__main__':

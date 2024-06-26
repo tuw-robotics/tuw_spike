@@ -22,7 +22,7 @@ class Line_Trajectory(Node):
         self.sub_odom = self.create_subscription(Odometry, 'odom', self.odom_callback, 10)
         self.sub_ground_truth = self.create_subscription(Odometry, "odom_ground_truth", self.ground_truth_callback, 10)
 
-        self.velocity = self.declare_parameter("velocity", 0.9).get_parameter_value().double_value
+        self.velocity = self.declare_parameter("velocity", 0.5).get_parameter_value().double_value
         self.delay = self.declare_parameter("delay", 1.0).get_parameter_value().double_value
         
         self.time = -self.delay
