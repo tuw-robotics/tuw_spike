@@ -91,7 +91,7 @@ def generate_launch_description():
         # Robot Namespace
         GroupAction([
             PushRosNamespace(LaunchConfiguration("robot_ns")),
-            TimerAction(period=5.0, actions=[simulation_spawn_launch]),
+            simulation_spawn_launch,
             trajectory_driver,
             hardware_launch,
             static_tf
