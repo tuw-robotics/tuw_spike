@@ -39,7 +39,9 @@ RayLocalizer::RayLocalizer(const rclcpp::Logger &logger,
                            image_transport::Publisher debug_pub)
     : logger(logger), tf_buffer(std::move(tfBuffer)),
       param_listener(std::move(paramListener)),
-      debug_pub(std::move(debug_pub)) {
+      debug_pub(std::move(debug_pub)),
+      last_timings_print(std::chrono::steady_clock::now())
+{
     params = this->param_listener->get_params();
 }
 
@@ -53,9 +55,13 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
         params = param_listener->get_params();
     }
 
+    timings.start();
+
     // Convert input image and setup debug image
     auto img = cv_bridge::toCvShare(image, "mono8");
     state.image = img->image;
+
+    timings.push_time("img_convert");
 
     // Get image viewport
     int width = img->image.cols;
@@ -71,8 +77,12 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     state.homography = *homography;
     state.inv_homography = homography->inv();
 
+    timings.push_time("determine_homography");
+
     // Initialize debug image from input image
     setup_debug_image(state);
+
+    timings.push_time("debug_img_setup");
 
     // Initialize laser scan parameters
     state.ray_center = state.homography * ProjPoint2d(0, 0);
@@ -105,11 +115,15 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     laser_scan->range_max = 100.0;
     laser_scan->ranges.reserve(params.num_rays);
 
+    timings.push_time("laser_scan_init");
+
     // Populate laser scan ranges
     for (int64_t i = 0; i < params.num_rays; i++) {
         double angle = start_angle + static_cast<double>(i) * angle_increment;
         laser_scan->ranges.push_back(ray_cast(state, angle));
     }
+
+    timings.push_time("laser_scan");
 
     // Publish debug image
     std_msgs::msg::Header debug_header;
@@ -117,6 +131,14 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
     debug_header.stamp = image->header.stamp;
     cv_bridge::CvImage dbg_img{debug_header, "bgr8", state.debug_image};
     debug_pub.publish(dbg_img.toImageMsg());
+
+    timings.push_time("debug_publish");
+
+    if (const auto now = std::chrono::steady_clock::now();
+        now - last_timings_print > 5000ms) {
+        last_timings_print = now;
+        RCLCPP_INFO_STREAM(logger, "Timings:\n" << timings);
+    }
 
     // Return laser scan
     return laser_scan;
