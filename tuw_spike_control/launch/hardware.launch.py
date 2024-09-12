@@ -42,7 +42,8 @@ def generate_launch_description():
         arguments=[
             "joint_state_broadcaster",
             "controller_diff_drive",
-            "--controller-manager", "controller_manager"
+            "--controller-manager", "controller_manager",
+            "--controller-manager-timeout", "20"
         ]
     )
 

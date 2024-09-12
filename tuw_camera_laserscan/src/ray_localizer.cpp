@@ -22,6 +22,8 @@ static constexpr auto KERNEL_GAUSS = gaussian<int16_t, 5>(100, 0.8);
 
 static constexpr auto KERNEL = convolve(KERNEL_DIFF, KERNEL_GAUSS);
 
+static constexpr auto DEBUG_ENABLED = false;
+
 struct RayLocalizer::ProcessingState {
     cv::Mat image;
     cv::Mat debug_image;
@@ -125,14 +127,16 @@ sensor_msgs::msg::LaserScan::UniquePtr RayLocalizer::process_frame(
 
     timings.push_time("laser_scan");
 
-    // Publish debug image
-    std_msgs::msg::Header debug_header;
-    debug_header.frame_id = params.ray_frame;
-    debug_header.stamp = image->header.stamp;
-    cv_bridge::CvImage dbg_img{debug_header, "bgr8", state.debug_image};
-    debug_pub.publish(dbg_img.toImageMsg());
+    if constexpr (DEBUG_ENABLED) {
+        // Publish debug image
+        std_msgs::msg::Header debug_header;
+        debug_header.frame_id = params.ray_frame;
+        debug_header.stamp = image->header.stamp;
+        cv_bridge::CvImage dbg_img{debug_header, "bgr8", state.debug_image};
+        debug_pub.publish(dbg_img.toImageMsg());
 
-    timings.push_time("debug_publish");
+        timings.push_time("debug_publish");
+    }
 
     if (const auto now = std::chrono::steady_clock::now();
         now - last_timings_print > 5000ms) {
@@ -288,7 +292,7 @@ std::optional<ProjPoint2d> RayLocalizer::detect_edge(ProcessingState &state,
 
 void RayLocalizer::setup_debug_image(ProcessingState &state) const {
     cv::Matx33d debug_transform;
-
+    if constexpr (!DEBUG_ENABLED) return;
     if (params.debug_warped) {
         // Create an affine transform to map the ray XY plane to the debug
         // image dimensions
@@ -336,6 +340,7 @@ void RayLocalizer::setup_debug_image(ProcessingState &state) const {
 void RayLocalizer::debug_point(const ProcessingState &state,
                                const cv::Scalar &color,
                                const cv::Point2d &point) {
+    if constexpr (!DEBUG_ENABLED) return;
     ProjPoint2d pt = state.debug_transform * ProjPoint2d(point.x, point.y);
     if (!pt.at_infinity()) {
         cv::circle(state.debug_image, static_cast<cv::Point>(pt), 2, color,
@@ -346,6 +351,7 @@ void RayLocalizer::debug_point(const ProcessingState &state,
 void RayLocalizer::debug_line(const ProcessingState &state,
                               const cv::Scalar &color, const cv::Point2d &start,
                               const cv::Point2d &end) {
+    if constexpr (!DEBUG_ENABLED) return;
     ProjPoint2d start_dbg =
         state.debug_transform * ProjPoint2d(start.x, start.y);
     ProjPoint2d end_dbg = state.debug_transform * ProjPoint2d(end.x, end.y);
@@ -359,6 +365,7 @@ void RayLocalizer::debug_vector(const ProcessingState &state,
                                 const cv::Scalar &color,
                                 const cv::Point2d &origin,
                                 const cv::Vec2d &vector) {
+    if constexpr (!DEBUG_ENABLED) return;
     debug_line(state, color, origin, cv::Vec2d(origin) + vector);
 }
 
