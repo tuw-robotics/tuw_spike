@@ -299,6 +299,7 @@ return_type TuwSpikeSystemInterface::write(const rclcpp::Time &time,
         velocity_right = -velocity_right;
     }
 
+    // std::string message = "port " + std::to_string(left_wheel_port) + "; set " +  std::to_string(velocity_left / 18.84) + "; port " + std::to_string(right_wheel_port) + "; set " +  std::to_string(velocity_right / (18.84)) + ";\r";   // pwm
     std::string message = "port " + std::to_string(left_wheel_port) + "; set " +  std::to_string(velocity_left / (2*M_PI)) + "; port " + std::to_string(right_wheel_port) + "; set " +  std::to_string(velocity_right / (2*M_PI)) + ";\r";
     boost::asio::write(serial, boost::asio::buffer(message)); 
 
@@ -354,10 +355,10 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
     
         std::string cmd = "echo 0;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
-        cmd = "plimit 1; port " + std::to_string(left_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0 ; selrate 10; pid_diff " + std::to_string(left_wheel_port) + " 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
+        cmd = "plimit 1; port " + std::to_string(left_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0 ; selrate 10; pid_diff " + std::to_string(left_wheel_port) + " 0 5 s2 0.0027777778 1 0.1 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        cmd = "port " + std::to_string(right_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0; selrate 10; pid_diff " + std::to_string(right_wheel_port) + " 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
+        cmd = "port " + std::to_string(right_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0; selrate 10; pid_diff " + std::to_string(right_wheel_port) + " 0 5 s2 0.0027777778 1 0.1 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
 
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
