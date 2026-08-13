@@ -16,7 +16,7 @@
 #include "tuw_libcamera/request_handler.hpp"
 #include "tuw_libcamera/stream_handler.hpp"
 
-#include "tuw_libcamera_capture_node_parameters.hpp"
+#include "tuw_libcamera/tuw_libcamera_capture_node_parameters.hpp"
 
 namespace tuw_libcamera {
 

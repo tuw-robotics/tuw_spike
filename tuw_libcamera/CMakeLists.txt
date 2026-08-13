@@ -25,9 +25,9 @@ target_include_directories(tuw_libcamera_common INTERFACE
   $<INSTALL_INTERFACE:include>)
 target_compile_features(tuw_libcamera_common INTERFACE c_std_99 cxx_std_17)  # Require C99 and C++17
 
-ament_target_dependencies(tuw_libcamera_common INTERFACE
-  rclcpp_components
-  sensor_msgs)
+target_link_libraries(tuw_libcamera_common INTERFACE
+  ${rclcpp_components_TARGETS}
+  ${sensor_msgs_TARGETS})
 
 # Include node source
 add_subdirectory(src/capture)

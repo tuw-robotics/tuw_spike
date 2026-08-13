@@ -19,7 +19,7 @@ class TuwSpikeSystemInterface : public hardware_interface::SystemInterface {
 
   private:
     CallbackReturn
-    on_init(const hardware_interface::HardwareInfo &hardware_info) override;
+    on_init(const hardware_interface::HardwareComponentInterfaceParams &params) override;
     CallbackReturn
     on_configure(const rclcpp_lifecycle::State &previous_state) override;
     CallbackReturn

@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 project(tuw_spike_control)
+
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -10,7 +14,7 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 find_package(xacro REQUIRED)
 find_package(realtime_tools REQUIRED)
 find_package(hardware_interface REQUIRED)
@@ -32,11 +36,14 @@ target_include_directories(tuw_spike_control_interface PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(tuw_spike_control_interface PUBLIC c_std_99 cxx_std_20)  # Require C99 and C++17
-ament_target_dependencies(tuw_spike_control_interface Boost hardware_interface pluginlib
-rclcpp
-rclcpp_lifecycle
-realtime_tools)
-# target_link_libraries(tuw_spike_control_interface Boost::system)
+target_link_libraries(tuw_spike_control_interface PUBLIC
+  Boost::headers
+  hardware_interface::hardware_interface
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  rclcpp_lifecycle::rclcpp_lifecycle
+  realtime_tools::realtime_tools
+)
 
 ################################
 ## ros2_control plugin export ##

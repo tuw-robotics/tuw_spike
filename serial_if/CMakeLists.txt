@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 project(serial_if)
+
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -10,15 +14,14 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 add_executable(serial_if src/serial_if.cpp)
 target_include_directories(serial_if PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(serial_if PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-ament_target_dependencies(serial_if Boost)
-target_link_libraries(serial_if Boost::system)
+target_link_libraries(serial_if Boost::headers)
 
 install(TARGETS serial_if
   DESTINATION lib/${PROJECT_NAME})

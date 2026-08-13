@@ -40,10 +40,12 @@ TuwSpikeSystemInterface::~TuwSpikeSystemInterface()
 }
 
 CallbackReturn
-TuwSpikeSystemInterface::on_init(const HardwareInfo &hardware_info) {
-    if (SystemInterface::on_init(hardware_info) == CallbackReturn::ERROR) {
+TuwSpikeSystemInterface::on_init(const HardwareComponentInterfaceParams &params) {
+    if (SystemInterface::on_init(params) == CallbackReturn::ERROR) {
         return CallbackReturn::ERROR;
     }
+
+    const HardwareInfo &hardware_info = params.hardware_info;
 
     if (hardware_info.joints.size() != 2) {
         RCUTILS_LOG_ERROR_NAMED(

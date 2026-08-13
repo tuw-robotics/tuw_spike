@@ -17,7 +17,7 @@ int main(int argc, char ** argv)
   (void) argv;
 
   // Initialize Boost Asio
-  boost::asio::io_service io;
+  boost::asio::io_context io;
   
   // Define serial port settings
   std::string port_name = "/dev/ttyS0";

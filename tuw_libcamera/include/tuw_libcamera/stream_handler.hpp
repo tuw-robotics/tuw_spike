@@ -7,7 +7,7 @@
 
 #include "tuw_libcamera/buffer_context.hpp"
 
-#include "tuw_libcamera_capture_node_parameters.hpp"
+#include "tuw_libcamera/tuw_libcamera_capture_node_parameters.hpp"
 
 namespace tuw_libcamera {
 
