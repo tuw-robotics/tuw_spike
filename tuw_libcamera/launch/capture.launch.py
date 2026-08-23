@@ -15,8 +15,8 @@ def generate_launch_description():
             "streams.video": {
                 "format": "YUYV",
                 "target_format": "yuv422_yuy2",
-                "width": 1280,
-                "height": 720
+                "width": 1536,
+                "height": 864
             }
         }]
     )

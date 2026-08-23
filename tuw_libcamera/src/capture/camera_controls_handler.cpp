@@ -19,7 +19,7 @@ template <> struct control_data_type<libcamera::ControlTypeFloat> {
     using type = float;
 };
 template <> struct control_data_type<libcamera::ControlTypeString> {
-    using type = std::string;
+    using type = std::string_view;
 };
 template <> struct control_data_type<libcamera::ControlTypeRectangle> {
     using type = libcamera::Rectangle;
@@ -45,6 +45,20 @@ template <libcamera::ControlType CT> struct control_value_converter {
     static data_type from_parameter(const param_type &param) { return param; }
 
     static param_type to_parameter(const data_type &data) { return data; }
+};
+
+template <> struct control_value_converter<libcamera::ControlTypeString> {
+    using data_type =
+        typename control_data_type<libcamera::ControlTypeString>::type;
+    using param_type = std::string;
+
+    static data_type from_parameter(const param_type &param) {
+        return data_type(param);
+    }
+
+    static param_type to_parameter(const data_type &data) {
+        return param_type(data);
+    }
 };
 
 template <> struct control_value_converter<libcamera::ControlTypeRectangle> {
@@ -112,6 +126,14 @@ CameraControlsHandler::CameraControlsHandler(
                     "Camera supported control: %s Type: %d Info: %s",
                     ctrl_id->name().c_str(), ctrl_id->type(),
                     ctrl_info.toString().c_str());
+
+        if (ctrl_info.min().isArray() || ctrl_info.max().isArray() ||
+            ctrl_info.def().isArray()) {
+            RCLCPP_WARN(node->get_logger(),
+                        "Skipping array-valued control '%s' (not supported)",
+                        ctrl_id->name().c_str());
+            continue;
+        }
 
         switch (ctrl_id->type()) {
             HANDLE_CONTROL_TYPE(Bool);

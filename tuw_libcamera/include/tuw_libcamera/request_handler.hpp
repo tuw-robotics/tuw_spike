@@ -21,11 +21,15 @@ class RequestHandler : public rclcpp::Waitable {
                    std::shared_ptr<libcamera::Camera> camera,
                    size_t num_requests, std::string frame_id);
 
-    void add_to_wait_set(rcl_wait_set_t *wait_set) override;
-    bool is_ready(rcl_wait_set_t *wait_set) override;
+    void add_to_wait_set(rcl_wait_set_t &wait_set) override;
+    bool is_ready(const rcl_wait_set_t &wait_set) override;
     std::shared_ptr<void> take_data() override;
-    void execute(std::shared_ptr<void> &data) override;
+    std::shared_ptr<void> take_data_by_entity_id(size_t id) override;
+    void execute(const std::shared_ptr<void> &data) override;
     size_t get_number_of_ready_guard_conditions() override;
+    void set_on_ready_callback(std::function<void(size_t, int)> callback) override;
+    void clear_on_ready_callback() override;
+    std::vector<std::shared_ptr<rclcpp::TimerBase>> get_timers() const override;
 
     void add_stream(libcamera::Stream *stream,
                     std::unique_ptr<StreamHandler> stream_handler,

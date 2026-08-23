@@ -178,11 +178,27 @@ create_stream_handler(rclcpp::Node *node,
     auto mapping =
         get_format_mapping(stream_cfg.pixelFormat, params.target_format);
     if (!mapping) {
+        auto target_formats = get_target_formats(stream_cfg.pixelFormat);
+
         std::stringstream error;
-        error << "Unsupported pixel format: ";
-        error << stream_cfg.pixelFormat;
-        if (!params.target_format.empty()) {
-            error << " (with target format: " << params.target_format << ")";
+        if (params.target_format.empty()) {
+            error << "No conversion available for pixel format: "
+                  << stream_cfg.pixelFormat;
+        } else {
+            error << "Target format '" << params.target_format
+                  << "' is not available for pixel format: "
+                  << stream_cfg.pixelFormat;
+        }
+        if (target_formats.empty()) {
+            error << ". No target formats are supported for this pixel "
+                     "format.";
+        } else {
+            error << ". Supported target formats: ";
+            for (size_t i = 0; i < target_formats.size(); ++i) {
+                if (i > 0)
+                    error << ", ";
+                error << target_formats[i];
+            }
         }
         throw std::runtime_error(error.str());
     }

@@ -93,7 +93,7 @@ void RequestHandler::handle(libcamera::Request *request) {
     gc->trigger();
 }
 
-void RequestHandler::execute(std::shared_ptr<void> &data) {
+void RequestHandler::execute(const std::shared_ptr<void> &data) {
     (void)data;
     RCLCPP_DEBUG(logger, "Execute begin: waiting = %ld",
                  waiting_requests.load());
@@ -136,11 +136,11 @@ void RequestHandler::execute(std::shared_ptr<void> &data) {
     RCLCPP_DEBUG(logger, "Execute end: waiting = %ld", waiting_requests.load());
 }
 
-void RequestHandler::add_to_wait_set(rcl_wait_set_t *wait_set) {
+void RequestHandler::add_to_wait_set(rcl_wait_set_t &wait_set) {
     gc->add_to_wait_set(wait_set);
 }
 
-bool RequestHandler::is_ready(rcl_wait_set_t *wait_set) {
+bool RequestHandler::is_ready(const rcl_wait_set_t &wait_set) {
     (void)wait_set;
     RCLCPP_DEBUG(logger, "is_ready: waiting = %ld", waiting_requests.load());
     return waiting_requests > 0;
@@ -148,6 +148,19 @@ bool RequestHandler::is_ready(rcl_wait_set_t *wait_set) {
 
 std::shared_ptr<void> RequestHandler::take_data() { return nullptr; }
 
+std::shared_ptr<void> RequestHandler::take_data_by_entity_id(size_t id) {
+    (void)id;
+    return nullptr;
+}
+
 size_t RequestHandler::get_number_of_ready_guard_conditions() { return 1; }
+
+void RequestHandler::set_on_ready_callback(std::function<void(size_t, int)> callback) {
+    (void)callback;
+}
+
+void RequestHandler::clear_on_ready_callback() {}
+
+std::vector<std::shared_ptr<rclcpp::TimerBase>> RequestHandler::get_timers() const { return {}; }
 
 } // namespace tuw_libcamera

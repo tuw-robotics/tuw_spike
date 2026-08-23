@@ -42,7 +42,7 @@ const std::unordered_multimap<libcamera::PixelFormat, FormatMapping> FORMAT_MAP{
     decode(lc::MJPEG, ros::BGR8), compressed(lc::MJPEG, "jpeg"),
     // Packed YCbCr
     direct(lc::UYVY, ros::YUV422),
-    direct(lc::YUYV, ros::YUV422_YUY2),
+    direct(lc::YUYV, ros::YUYV),
 
 };
 
@@ -61,6 +61,17 @@ std::optional<FormatMapping> get_format_mapping(libcamera::PixelFormat fmt,
     } else {
         return mapping->second;
     }
+}
+
+std::vector<std::string> get_target_formats(libcamera::PixelFormat fmt) {
+    auto [start, end] = FORMAT_MAP.equal_range(fmt);
+    std::vector<std::string> target_formats;
+    for (auto it = start; it != end; ++it) {
+        target_formats.push_back(std::visit(
+            [](auto &&conversion) { return conversion.ros_format; },
+            it->second));
+    }
+    return target_formats;
 }
 
 } // namespace tuw_libcamera

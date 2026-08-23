@@ -4,6 +4,7 @@
 #include <optional>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include <libcamera/libcamera.h>
 #include <sensor_msgs/image_encodings.hpp>
@@ -23,6 +24,8 @@ using FormatMapping =
 
 std::optional<FormatMapping> get_format_mapping(libcamera::PixelFormat fmt,
                                                 std::string target_format = "");
+
+std::vector<std::string> get_target_formats(libcamera::PixelFormat fmt);
 
 }; // namespace tuw_libcamera
 
