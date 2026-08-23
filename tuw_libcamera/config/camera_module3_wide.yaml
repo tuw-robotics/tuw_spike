@@ -1,0 +1,10 @@
+/**:
+  ros__parameters:
+    camera_info_name: camera
+    stream_roles: ["video"]
+    streams:
+      video:
+        format: YUYV
+        target_format: yuyv
+        width: 1536
+        height: 864
