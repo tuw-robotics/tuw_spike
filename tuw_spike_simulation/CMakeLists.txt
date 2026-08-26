@@ -20,9 +20,11 @@ find_package(Boost REQUIRED)
 find_package(ignition-transport8 QUIET REQUIRED OPTIONAL_COMPONENTS log)
 
 add_executable(spawn src/spawn_robot.cpp)
-ament_target_dependencies(spawn PUBLIC rclcpp std_msgs)
-
-target_link_libraries(spawn PUBLIC Boost::boost ignition-transport8::core)
+target_link_libraries(spawn PUBLIC
+  rclcpp::rclcpp
+  std_msgs::std_msgs
+  Boost::boost
+  ignition-transport8::core)
 
 install(TARGETS
   spawn

@@ -33,12 +33,12 @@ target_include_directories(tuw_camera_laserscan_common INTERFACE
   $<INSTALL_INTERFACE:include>)
 target_compile_features(tuw_camera_laserscan_common INTERFACE c_std_99 cxx_std_20)  # Require C99 and C++20
 
-ament_target_dependencies(tuw_camera_laserscan_common INTERFACE
-  rclcpp_components
-  sensor_msgs
-  image_transport
-  OpenCV
-  cv_bridge)
+target_link_libraries(tuw_camera_laserscan_common INTERFACE
+  rclcpp_components::component
+  sensor_msgs::sensor_msgs
+  image_transport::image_transport
+  ${OpenCV_LIBS}
+  cv_bridge::cv_bridge)
 
 # Include node source
 add_subdirectory(src)

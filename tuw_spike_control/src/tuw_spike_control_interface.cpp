@@ -313,7 +313,8 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
     (void)previous_state;
     try {
         // Define serial port settings
-        std::string port_name = "/dev/ttyS0";
+        //std::string port_name = "/dev/ttyS0";
+        std::string port_name = "/dev/serial0";
         unsigned int baud_rate = 115200;
 
         // Open the serial port
