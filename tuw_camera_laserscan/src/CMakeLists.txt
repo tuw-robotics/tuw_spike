@@ -1,7 +1,8 @@
 add_library(tuw_camera_laserscan_ray_localizer_node SHARED
   ray_localizer_node.cpp
   ray_localizer.cpp
-  geometry.cpp)
+  geometry.cpp
+  timing_recorder.cpp)
 
 generate_parameter_library(tuw_camera_laserscan_ray_localizer_parameters
   ray_localizer_parameters.yaml)

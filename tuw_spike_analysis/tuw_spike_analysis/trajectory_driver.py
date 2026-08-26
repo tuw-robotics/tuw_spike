@@ -11,6 +11,7 @@ class TestTrajectoryDriverNode(Node):
     def __init__(self) -> None:
         super().__init__("trajectory_driver")
 
+        # change to 0.1 for smaller circles
         self.velocity = self.declare_parameter("velocity", 0.3).get_parameter_value().double_value
         self.center_dist = self.declare_parameter("center_dist", 0.3).get_parameter_value().double_value
         self.cross_alpha = self.declare_parameter("cross_alpha", math.radians(5.0)).get_parameter_value().double_value
@@ -25,6 +26,9 @@ class TestTrajectoryDriverNode(Node):
         self.total_time = 2.0 * self.time_straight + 2.0 * self.time_curve
 
         self.time = -self.startup_delay
+
+        # # counter is used to keep track of the number of double circles that are done
+        # self.counter = 1
 
         self.pub_vel = self.create_publisher(TwistStamped, "cmd_vel", 10)
         self.trajectory_timer = self.create_timer(TRAJECTORY_UPDATE_PERIOD, self.update_trajectory)
@@ -50,6 +54,10 @@ class TestTrajectoryDriverNode(Node):
 
         self.time += TRAJECTORY_UPDATE_PERIOD
         if self.time > self.total_time:
+            # # uncomment to stop after one double circle drive
+            # self.get_logger().info(f'Finished circle: {self.counter}')
+            # self.counter += 1
+            # self.destroy_timer(self.trajectory_timer)
             self.time -= self.total_time
 
 def main(args=None):

@@ -26,6 +26,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(generate_parameter_library REQUIRED)
 find_package(controller_manager REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
 # Add library and library alias
 add_library(tuw_spike_control_interface SHARED
@@ -36,14 +37,12 @@ target_include_directories(tuw_spike_control_interface PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(tuw_spike_control_interface PUBLIC c_std_99 cxx_std_20)  # Require C99 and C++17
-target_link_libraries(tuw_spike_control_interface PUBLIC
-  Boost::headers
-  hardware_interface::hardware_interface
-  pluginlib::pluginlib
-  rclcpp::rclcpp
-  rclcpp_lifecycle::rclcpp_lifecycle
-  realtime_tools::realtime_tools
-)
+ament_target_dependencies(tuw_spike_control_interface Boost hardware_interface pluginlib
+rclcpp
+rclcpp_lifecycle
+realtime_tools
+ament_index_cpp)
+# target_link_libraries(tuw_spike_control_interface Boost::system ament_index_cpp::ament_index_cpp)
 
 ################################
 ## ros2_control plugin export ##
@@ -77,7 +76,7 @@ install(
 
 ## Launch and config files ##
 install(
-        DIRECTORY launch config
+        DIRECTORY launch config firmware
         DESTINATION share/${PROJECT_NAME}
 )
 

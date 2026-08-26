@@ -14,6 +14,7 @@
 #include <tf2_ros/buffer.h>
 
 #include "geometry.hpp"
+#include "timing_recorder.hpp"
 #include "tuw_camera_laserscan_ray_localizer_parameters.hpp"
 
 namespace tuw_camera_laserscan {
@@ -35,6 +36,8 @@ class RayLocalizer {
     std::unique_ptr<ParamListener> param_listener;
     Params params;
     image_transport::Publisher debug_pub;
+    TimingRecorder timings;
+    std::chrono::steady_clock::time_point last_timings_print;
 
     struct ProcessingState;
 

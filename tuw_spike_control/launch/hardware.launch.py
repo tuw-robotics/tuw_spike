@@ -36,18 +36,39 @@ def generate_launch_description():
         )),
     )
 
+    # Trajectory driver and recording
+    trajectory_driver = Node(
+        package="tuw_spike_analysis",
+        executable="trajectory_driver",
+        parameters=[{
+            "velocity": 0.2,
+            "startup_delay": 5.0
+        }],
+        condition=IfCondition(LaunchConfiguration("trajectory"))
+    )
+
+    # Trajectory driver and recording
+    one_meter_forward = Node(
+        package="tuw_spike_analysis",
+        executable="one_meter_forward",
+        condition=IfCondition(LaunchConfiguration("trajectory"))
+    )
+
     spawner_node = Node(
         package="controller_manager",
         executable="spawner",
         arguments=[
             "joint_state_broadcaster",
             "controller_diff_drive",
-            "--controller-manager", "controller_manager"
+            "--controller-manager", "controller_manager",
+            "--controller-manager-timeout", "20"
         ]
     )
 
     return LaunchDescription([
         control_node,
         robot_state_pub,
-        spawner_node
+        spawner_node,
+        trajectory_driver
+        # one_meter_forward
     ])

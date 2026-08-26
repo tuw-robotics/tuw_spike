@@ -14,14 +14,16 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(ament_index_cpp REQUIRED)
 
 add_executable(serial_if src/serial_if.cpp)
 target_include_directories(serial_if PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(serial_if PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-target_link_libraries(serial_if Boost::headers)
+ament_target_dependencies(serial_if Boost ament_index_cpp)
+target_link_libraries(serial_if Boost::system ament_index_cpp::ament_index_cpp)
 
 install(TARGETS serial_if
   DESTINATION lib/${PROJECT_NAME})

@@ -11,6 +11,9 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <fstream>
+#include <filesystem>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rcutils/logging_macros.h"
@@ -28,6 +31,85 @@ static constexpr char RIGHT_JOINT[] = "right_wheel_joint";
 // Declare the io_context and serial port globally
 boost::asio::io_context io_context;
 boost::asio::serial_port serial(io_context);
+boost::asio::streambuf buf;
+
+// read a binary file and return the content as a std::vector<unsigned char>
+std::vector<unsigned char> readBinaryFile(const std::string& filePath) {
+    std::ifstream file(filePath, std::ios::binary);
+    std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(file), {});
+    return buffer;
+}
+
+// read a line from the serial port
+std::string serialReadLine() {
+    boost::asio::read_until(serial, buf, '\n');
+    std::istream is(&buf);
+    std::string line;
+    std::getline(is, line);
+    return line;
+}
+
+// read from the serial port until "BHBL>" is read
+void getPrompt() {
+    std::string bootloader_str = "BHBL>";
+    while (true) {
+        std::string line = serialReadLine();
+        if (line.find(bootloader_str) != std::string::npos) {
+            break;
+        }
+    }
+}
+
+// calculate the checksum for the firmware
+uint32_t checksum(const std::vector<uint8_t>& data) {
+    uint32_t u = 1;
+    for (size_t i = 0; i < data.size(); ++i) {
+        if ((u & 0x80000000) != 0) {
+            u = (u << 1) ^ 0x1d872b41;
+        } else {
+            u = u << 1;
+        }
+        u = (u ^ data[i]) & 0xFFFFFFFF;
+    }
+    return u;
+}
+
+void loadFirmware() {
+    std::string package_share_directory = ament_index_cpp::get_package_share_directory("tuw_spike_control");
+    std::string firmwarePath = package_share_directory + "/firmware/firmware.bin";
+    std::string signaturePath = package_share_directory + "/firmware/signature.bin";
+
+    std::vector<unsigned char> firmware = readBinaryFile(firmwarePath);
+    std::vector<unsigned char> signature = readBinaryFile(signaturePath);
+   
+    // clear current image
+    boost::asio::write(serial, boost::asio::buffer("clear\r", 6));
+    getPrompt();
+
+    // write firmware to serial port
+    std::string loadCommand = "load " + std::to_string(std::filesystem::file_size(firmwarePath)) + " " + std::to_string(checksum(firmware)) + "\r";
+    boost::asio::write(serial, boost::asio::buffer(loadCommand));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    boost::asio::write(serial, boost::asio::buffer("\x02", 1));
+    boost::asio::write(serial, boost::asio::buffer(firmware));
+    boost::asio::write(serial, boost::asio::buffer("\x03\r", 2));
+    getPrompt();
+
+    // write signature to serial port
+    std::string signatureCommand = "signature " + std::to_string(std::filesystem::file_size(signaturePath)) + "\r";   
+    boost::asio::write(serial, boost::asio::buffer(signatureCommand));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    boost::asio::write(serial, boost::asio::buffer("\x02", 1));
+    boost::asio::write(serial, boost::asio::buffer(signature));
+    boost::asio::write(serial, boost::asio::buffer("\x03\r", 2));
+    getPrompt();
+
+    boost::asio::write(serial, boost::asio::buffer("reboot\r", 7));
+
+    // wait for 10 seconds until reboot is finished
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+}
 
 
 TuwSpikeSystemInterface::TuwSpikeSystemInterface() = default;
@@ -131,7 +213,6 @@ return_type TuwSpikeSystemInterface::read(const rclcpp::Time &time,
         if (error) {
             std::cerr << "Error reading from serial port: " << error.message() << std::endl;
         } else {
-            // std::cout << "Read " << bytes_read << " bytes\n";
             // process buffer
             for (char c : buffer) {
                 if (c == '\n') {
@@ -220,6 +301,7 @@ return_type TuwSpikeSystemInterface::write(const rclcpp::Time &time,
         velocity_right = -velocity_right;
     }
 
+    // std::string message = "port " + std::to_string(left_wheel_port) + "; set " +  std::to_string(velocity_left / 18.84) + "; port " + std::to_string(right_wheel_port) + "; set " +  std::to_string(velocity_right / (18.84)) + ";\r";   // pwm
     std::string message = "port " + std::to_string(left_wheel_port) + "; set " +  std::to_string(velocity_left / (2*M_PI)) + "; port " + std::to_string(right_wheel_port) + "; set " +  std::to_string(velocity_right / (2*M_PI)) + ";\r";
     boost::asio::write(serial, boost::asio::buffer(message)); 
 
@@ -239,13 +321,46 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
 
         // Set the baud rate
         serial.set_option(boost::asio::serial_port_base::baud_rate(baud_rate));
-  
+
+        // Check if we're in the bootloader or the firmware
+        boost::asio::write(serial, boost::asio::buffer("version\r", 8));
+        int emptydata = 0;
+        int incdata = 0;
+        while (true) {
+            std::string line = serialReadLine();
+            if (line.empty()) {
+                ++emptydata;
+                if (emptydata > 3) {
+                    break;
+                } else {
+                    continue;
+                }
+            }
+
+            if (line.find("Firmware version: ") != std::string::npos) {
+                // firmware is already loaded
+                break;
+            } else if (line.find("BuildHAT bootloader version") != std::string::npos) {
+                // bootloader active -> load firmware
+                loadFirmware();
+                break;
+            } else {
+                ++incdata;
+                if (incdata > 5) {
+                    RCUTILS_LOG_ERROR_NAMED(TAG, "Error getting BuildHAT state");
+                    return CallbackReturn::ERROR;
+                } else {
+                    boost::asio::write(serial, boost::asio::buffer("version\r", 8));
+                }
+            }
+        }
+    
         std::string cmd = "echo 0;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
-        cmd = "plimit 1; port " + std::to_string(left_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0 ; selrate 10; pid_diff " + std::to_string(left_wheel_port) + " 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
+        cmd = "plimit 1; port " + std::to_string(left_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0 ; selrate 10; pid_diff " + std::to_string(left_wheel_port) + " 0 5 s2 0.0027777778 1 0.1 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        cmd = "port " + std::to_string(right_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0; selrate 10; pid_diff " + std::to_string(right_wheel_port) + " 0 5 s2 0.0027777778 1 0 2.5 0 .4 0.01;\r";
+        cmd = "port " + std::to_string(right_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0; selrate 10; pid_diff " + std::to_string(right_wheel_port) + " 0 5 s2 0.0027777778 1 0.1 2.5 0 .4 0.01;\r";
         boost::asio::write(serial, boost::asio::buffer(cmd));
 
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
@@ -318,7 +433,6 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
         return CallbackReturn::ERROR;
     }
 
-    // TODO: load firmware if necessary
     return CallbackReturn::SUCCESS;
 }
 

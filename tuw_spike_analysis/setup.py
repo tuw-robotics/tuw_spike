@@ -23,6 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'quarter_circle_drive = tuw_spike_analysis.quarter_circle_drive:main',
+            'one_meter_forward = tuw_spike_analysis.one_meter_forward:main',
             'trajectory_driver = tuw_spike_analysis.trajectory_driver:main',
             'trajectory_est_recorder = tuw_spike_analysis.trajectory_est_recorder:main',
             'trajectory_true_recorder = tuw_spike_analysis.trajectory_true_recorder:main',
