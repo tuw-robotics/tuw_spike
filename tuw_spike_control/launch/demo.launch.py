@@ -44,14 +44,12 @@ def generate_launch_description():
             "velocity": 0.2,
             "startup_delay": 5.0
         }],
-        condition=IfCondition(LaunchConfiguration("trajectory"))
     )
 
     # Trajectory driver and recording
     one_meter_forward = Node(
         package="tuw_spike_analysis",
         executable="one_meter_forward",
-        condition=IfCondition(LaunchConfiguration("trajectory"))
     )
 
     spawner_node = Node(
@@ -70,6 +68,6 @@ def generate_launch_description():
         control_node,
         robot_state_pub,
         spawner_node,
-        trajectory_driver
+        # trajectory_driver
         # one_meter_forward
     ])

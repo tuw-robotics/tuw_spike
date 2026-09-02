@@ -59,6 +59,24 @@ pluginlib_export_plugin_description_file(hardware_interface hardware_interface.x
 add_library(tuw_spike_control::hardware_interface ALIAS tuw_spike_control_interface)
 
 ############
+## demo   ##
+
+# Simple hello-world executable that exercises the tuw_spike_control_interface
+# library by calling its on_configure() lifecycle callback.
+add_executable(demo src/demo.cpp)
+target_compile_features(demo PUBLIC c_std_99 cxx_std_20)
+target_link_libraries(demo PUBLIC
+  tuw_spike_control_interface
+  hardware_interface::hardware_interface
+  rclcpp::rclcpp
+  rclcpp_lifecycle::rclcpp_lifecycle)
+
+install(
+        TARGETS demo
+        DESTINATION lib/${PROJECT_NAME}
+)
+
+############
 ## others ##
 
 # Setup install targets

@@ -10,7 +10,7 @@ def generate_launch_description():
     camera_params_file = os.path.join(
         get_package_share_directory('tuw_libcamera'),
         'config',
-        'camera_module3_wide_bgr.yaml'
+        'camera_module3_wide_yuyv.yaml' # camera_module3_wide_bgr.yaml
     )
 
     capture_comp = ComposableNode(
