@@ -13,7 +13,7 @@
 #include <thread>
 #include <fstream>
 #include <filesystem>
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <ament_index_cpp/get_package_share_path.hpp>
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rcutils/logging_macros.h"
@@ -75,9 +75,15 @@ uint32_t checksum(const std::vector<uint8_t>& data) {
 }
 
 void loadFirmware() {
-    std::string package_share_directory = ament_index_cpp::get_package_share_directory("tuw_spike_control");
-    std::string firmwarePath = package_share_directory + "/firmware/firmware.bin";
-    std::string signaturePath = package_share_directory + "/firmware/signature.bin";
+    std::filesystem::path firmware_directory = ament_index_cpp::get_package_share_path("tuw_spike_control") / "firmware";
+    std::string firmwarePath = (firmware_directory / "firmware.bin").string();
+    std::string signaturePath = (firmware_directory / "signature.bin").string();
+
+    /*    
+    std::string firmwarePath = "/home/robot/projects/imr2026/ws00/src/python-build-hat/buildhat/data/firmware.bin";
+    std::string signaturePath = "/home/robot/projects/imr2026/ws00/src/python-build-hat/buildhat/data/signature.bin";
+*/
+    RCUTILS_LOG_INFO_NAMED(TAG, "load Firmware: %s", firmwarePath.c_str());
 
     std::vector<unsigned char> firmware = readBinaryFile(firmwarePath);
     std::vector<unsigned char> signature = readBinaryFile(signaturePath);
@@ -340,6 +346,7 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
 
             if (line.find("Firmware version: ") != std::string::npos) {
                 // firmware is already loaded
+                loadFirmware();
                 break;
             } else if (line.find("BuildHAT bootloader version") != std::string::npos) {
                 // bootloader active -> load firmware

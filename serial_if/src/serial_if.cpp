@@ -7,7 +7,7 @@
 #include <math.h>
 #include <fstream>
 #include <filesystem>
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <ament_index_cpp/get_package_share_path.hpp>
 
 // run with "docker -c lego0 compose up --build hardware"
 // hardware:
@@ -58,7 +58,7 @@ uint32_t checksum(const std::vector<uint8_t>& data) {
 }
 
 void loadFirmware() {
-    std::string package_share_directory = ament_index_cpp::get_package_share_directory("tuw_spike_control");
+    std::string package_share_directory = ament_index_cpp::get_package_share_path("tuw_spike_control");
     std::string firmwarePath = package_share_directory + "/firmware/firmware.bin";
     std::string signaturePath = package_share_directory + "/firmware/signature.bin";
 
