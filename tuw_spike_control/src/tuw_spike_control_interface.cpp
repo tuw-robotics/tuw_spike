@@ -24,6 +24,8 @@
 using namespace hardware_interface;
 
 namespace tuw_spike_control {
+static constexpr char FIRMWARE_FILENAME[]  = "2025-01-22_firmware.bin";
+static constexpr char SIGNATURE_FILENAME[] = "2025-01-22_signature.bin";
 static constexpr char TAG[] = "tuw_spike_control_interface";
 static constexpr char LEFT_JOINT[] = "left_wheel_joint";
 static constexpr char RIGHT_JOINT[] = "right_wheel_joint";
@@ -76,13 +78,9 @@ uint32_t checksum(const std::vector<uint8_t>& data) {
 
 void loadFirmware() {
     std::filesystem::path firmware_directory = ament_index_cpp::get_package_share_path("tuw_spike_control") / "firmware";
-    std::string firmwarePath = (firmware_directory / "firmware.bin").string();
-    std::string signaturePath = (firmware_directory / "signature.bin").string();
+    std::string firmwarePath  = (firmware_directory / FIRMWARE_FILENAME).string();
+    std::string signaturePath = (firmware_directory / SIGNATURE_FILENAME).string();
 
-    /*    
-    std::string firmwarePath = "/home/robot/projects/imr2026/ws00/src/python-build-hat/buildhat/data/firmware.bin";
-    std::string signaturePath = "/home/robot/projects/imr2026/ws00/src/python-build-hat/buildhat/data/signature.bin";
-*/
     RCUTILS_LOG_INFO_NAMED(TAG, "load Firmware: %s", firmwarePath.c_str());
 
     std::vector<unsigned char> firmware = readBinaryFile(firmwarePath);
@@ -344,9 +342,9 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
                 }
             }
 
+            RCUTILS_LOG_INFO_NAMED(TAG, line.c_str());
             if (line.find("Firmware version: ") != std::string::npos) {
                 // firmware is already loaded
-                loadFirmware();
                 break;
             } else if (line.find("BuildHAT bootloader version") != std::string::npos) {
                 // bootloader active -> load firmware
