@@ -6,6 +6,9 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Time
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, OrSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
+from launch.actions import SetLaunchConfiguration
+from launch.actions import OpaqueFunction
+from launch.substitutions import LaunchConfiguration, TextSubstitution 
 
 
 
@@ -13,12 +16,21 @@ def generate_launch_description():
     tuw_spike_description = FindPackageShare("tuw_spike_description")
     tuw_spike_control = FindPackageShare("tuw_spike_control")
     # Load controller paramter file
-    robot_controllers = PathJoinSubstitution([tuw_spike_control, "config", "controllers.yaml"])
+    def controllers_config_fnc(context):
+        file = PathJoinSubstitution([tuw_spike_control, "config", context.launch_configurations['controllers_config']])
+        return [SetLaunchConfiguration('controllers_config', file)]
+
+    controllers_config_ofnc = OpaqueFunction(function=controllers_config_fnc)
+    
+    controllers_config_arg = DeclareLaunchArgument('controllers_config', 
+                default_value=TextSubstitution(text='controllers.yaml'), 
+                description='controller paramter file')
+    
 
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        parameters=[robot_controllers],
+        parameters=[LaunchConfiguration('controllers_config')],
         # ros_arguments=["--log-level", "debug"],
         output="both",
         remappings=[
@@ -60,11 +72,13 @@ def generate_launch_description():
             "controller_diff_drive",
             "--controller-manager", "controller_manager",
             "--controller-manager-timeout", "20",
-            "--param-file", robot_controllers,
+            "--param-file", LaunchConfiguration('controllers_config'),
         ]
     )
 
     return LaunchDescription([
+        controllers_config_arg,
+        controllers_config_ofnc,
         control_node,
         robot_state_pub,
         spawner_node,
