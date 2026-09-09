@@ -45,8 +45,6 @@ Many thanks to the original creators for building it and making it available:
 - **Daniel Marth**
 - **Moritz Taferner**
 
-Upstream repository: <https://github.com/tuw-robotics/tuw_spike>
-
 ## Citation
 
 If you use this work in a publication, please cite:
