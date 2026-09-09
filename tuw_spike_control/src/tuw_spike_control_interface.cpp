@@ -24,7 +24,8 @@
 using namespace hardware_interface;
 
 namespace tuw_spike_control {
-static constexpr char SERIAL_PORT[]  = "/dev/ttyAMA0";
+//static constexpr char SERIAL_PORT[]  = "/dev/ttyAMA0";
+static constexpr char SERIAL_PORT[]  = "/dev/ttyUSB0";
 static constexpr char FIRMWARE_FILENAME[]  = "2025-01-22_firmware.bin";
 static constexpr char SIGNATURE_FILENAME[] = "2025-01-22_signature.bin";
 static constexpr char TAG[] = "tuw_spike_control_interface";
