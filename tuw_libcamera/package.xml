@@ -2,10 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>tuw_libcamera</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="jakob.buchsteiner@gmail.com">Jakob Buchsteiner</maintainer>
-  <license>TODO: License declaration</license>
+  <version>1.0.0</version>
+  <description>Composable ROS 2 nodes that capture images from a libcamera-supported camera (e.g. a Raspberry Pi camera module) and republish them through image_transport.</description>
+  <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
+  <author email="jakob.buchsteiner@gmail.com">Jakob Buchsteiner</author>
+  <author email="markus.bader@tuwien.ac.at">Markus Bader</author>
+  <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

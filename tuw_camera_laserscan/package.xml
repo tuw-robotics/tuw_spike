@@ -2,10 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>tuw_camera_laserscan</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="jakob.buchsteiner@gmail.com">jakob</maintainer>
-  <license>TODO: License declaration</license>
+  <version>1.0.0</version>
+  <description>Camera-image ray localizer for tuw_spike: matches rays cast from the camera image against a known occupancy-grid map to estimate the robot pose.</description>
+  <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
+  <author email="jakob.buchsteiner@gmail.com">Jakob Buchsteiner</author>
+  <author email="markus.bader@tuwien.ac.at">Markus Bader</author>
+  <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

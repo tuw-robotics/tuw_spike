@@ -2,10 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>tuw_spike_simulation</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="e12102632@student-tuwien.ac.at">moritztaf</maintainer>
-  <license>Apache-2.0</license>
+  <version>1.0.0</version>
+  <description>Gazebo world and robot-spawning launch files for simulating the tuw_spike vehicle.</description>
+  <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
+  <author email="e12102632@student-tuwien.ac.at">Moritz Taferner</author>
+  <author email="markus.bader@tuwien.ac.at">Markus Bader</author>
+  <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>

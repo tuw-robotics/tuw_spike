@@ -2,10 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>tuw_spike_control</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="e12125448@student.tuwien.ac.at">daniel</maintainer>
-  <license>TODO: License declaration</license>
+  <version>1.0.0</version>
+  <description>ros2_control hardware interface and control nodes for tuw_spike's drive motors, driven through a Raspberry Pi Build HAT over a direct C++/Boost.Asio serial link.</description>
+  <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
+  <author email="e12125448@student.tuwien.ac.at">Daniel Marth</author>
+  <author email="markus.bader@tuwien.ac.at">Markus Bader</author>
+  <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
