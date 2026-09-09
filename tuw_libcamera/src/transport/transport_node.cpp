@@ -45,7 +45,8 @@ class TransportNode : public rclcpp::Node {
 
         declare_parameter<std::vector<std::string>>(transport_param_name, allowlist);
 
-        auto pub = image_transport::create_publisher(this, topic);
+        auto pub = image_transport::create_publisher(
+            *this, topic, rclcpp::QoS(rmw_qos_profile_default.depth));
         sub = create_subscription<Image>(
             "image", rclcpp::SensorDataQoS(),
             [pub](Image::ConstSharedPtr img) { pub.publish(img); });

@@ -2,16 +2,15 @@
 
 ROS 2 packages for **tuw_spike**, a small differential-drive research robot
 built from LEGO SPIKE / Build HAT motors on a Raspberry Pi, with a
-Raspberry Pi camera used both for image capture and for camera-based
-localization.
+Raspberry Pi camera used both to capture images and to simulate a laser range scanner.
 
 Motor control is exposed through a
 [`ros2_control`](https://control.ros.org/) hardware interface
 (`tuw_spike_control`). The Build HAT is driven from that interface over a
 **direct serial link implemented in C++ with
 [Boost.Asio](https://www.boost.org/doc/libs/release/doc/html/boost_asio.html)**,
-talking the HAT's ASCII UART protocol directly — the packages deliberately do
-*not* use the Python
+talking the HAT's ASCII UART protocol directly.
+For performance reasons, the packages deliberately do *not* use the Python
 [`buildhat`](https://buildhat.readthedocs.io/) library provided by Raspberry Pi.
 
 <img src="tuw_spike_description/doc/vehicle00.jpg" alt="tuw_spike vehicle" width="600">
