@@ -3,7 +3,7 @@
 <package format="3">
   <name>tuw_camera_laserscan</name>
   <version>1.0.0</version>
-  <description>Camera-image ray localizer for tuw_spike: matches rays cast from the camera image against a known occupancy-grid map to estimate the robot pose.</description>
+  <description>Simulates a laser scan based on objects seen in the image.</description>
   <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
   <author email="jakob.buchsteiner@gmail.com">Jakob Buchsteiner</author>
   <author email="markus.bader@tuwien.ac.at">Markus Bader</author>

@@ -23,8 +23,8 @@ talking the HAT's ASCII UART protocol directly — the packages deliberately do
 | [`tuw_spike_control`](tuw_spike_control/) | `ros2_control` hardware interface and control nodes for the drive motors, driven through a [Raspberry Pi Build HAT](https://www.raspberrypi.com/products/build-hat/) over UART. |
 | [`tuw_spike_description`](tuw_spike_description/) | URDF/xacro model of the robot and its `robot_state_publisher` launch. |
 | [`tuw_spike_simulation`](tuw_spike_simulation/) | Gazebo world and robot-spawning launch files for simulating tuw_spike. |
-| [`tuw_libcamera`](tuw_libcamera/) | ROS 2 composable nodes for capturing images from a [libcamera](https://libcamera.org/)-supported camera and republishing them through `image_transport`. |
-| [`tuw_camera_laserscan`](tuw_camera_laserscan/) | Ray-based localizer that uses the camera image against a known map (AMCL-style bring-up included). |
+| [`tuw_libcamera`](tuw_libcamera/) | ROS 2 composable nodes for capturing images, designed to work with Raspberry Pis. |
+| [`tuw_camera_laserscan`](tuw_camera_laserscan/) | Simulates a laser scan based on objects seen in the image. |
 
 See each package's own `README.md` (where present) for build and launch
 details.
