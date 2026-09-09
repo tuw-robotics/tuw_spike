@@ -37,11 +37,11 @@ All packages are released under the BSD 3-Clause License — see [`LICENSE`](LIC
 ## Acknowledgements
 
 This package started from a student bachelor's thesis project at the
-[Automation Systems (E191-03)](https://ti.tuwien.ac.at/auto/) research unit
+[Automation Systems (E191-03)](https://auto.tuwien.ac.at/auto/) research unit
 of the [Institute of Computer Engineering](https://ti.tuwien.ac.at/), [TU Wien](https://www.tuwien.at/en/).
 Many thanks to the original creators for building it and making it available:
 
-- **Jakob Buchsteiner** — initial author and maintainer
+- **Jakob Buchsteiner**
 - **Daniel Marth**
 - **Moritz Taferner**
 
