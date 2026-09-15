@@ -5,7 +5,7 @@
   <version>1.0.0</version>
   <description>ros2_control hardware interface and control nodes for tuw_spike's drive motors, driven through a Raspberry Pi Build HAT over a direct C++/Boost.Asio serial link.</description>
   <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
-  <author email="e12125448@student.tuwien.ac.at">Daniel Marth</author>
+  <author email="daniel.marth@tum.de">Daniel Marth</author>
   <author email="markus.bader@tuwien.ac.at">Markus Bader</author>
   <license>BSD-3-Clause</license>
 

@@ -24,8 +24,7 @@
 using namespace hardware_interface;
 
 namespace tuw_spike_control {
-//static constexpr char SERIAL_PORT[]  = "/dev/ttyAMA0";
-static constexpr char SERIAL_PORT[]  = "/dev/ttyUSB0";
+static constexpr char SERIAL_PORT[]  = "/dev/ttyAMA0";
 static constexpr char FIRMWARE_FILENAME[]  = "2025-01-22_firmware.bin";
 static constexpr char SIGNATURE_FILENAME[] = "2025-01-22_signature.bin";
 static constexpr char TAG[] = "tuw_spike_control_interface";
@@ -300,6 +299,8 @@ return_type TuwSpikeSystemInterface::write(const rclcpp::Time &time,
     double velocity_left = command_motor_velocity[0];
     double velocity_right = command_motor_velocity[1];
 
+    
+
     if (reverse[0]) {
         velocity_left = -velocity_left;
     }
@@ -307,8 +308,12 @@ return_type TuwSpikeSystemInterface::write(const rclcpp::Time &time,
         velocity_right = -velocity_right;
     }
 
+    double target_left = velocity_left / (2*M_PI);
+    double target_right = velocity_right / (2*M_PI);
+    RCUTILS_LOG_INFO_NAMED(TAG, "write velocity %4.3f %4.3f - target %4.3f %4.3f ", velocity_left, velocity_right, target_left, target_right);
+
     // std::string message = "port " + std::to_string(left_wheel_port) + "; set " +  std::to_string(velocity_left / 18.84) + "; port " + std::to_string(right_wheel_port) + "; set " +  std::to_string(velocity_right / (18.84)) + ";\r";   // pwm
-    std::string message = "port " + std::to_string(left_wheel_port) + "; set " +  std::to_string(velocity_left / (2*M_PI)) + "; port " + std::to_string(right_wheel_port) + "; set " +  std::to_string(velocity_right / (2*M_PI)) + ";\r";
+    std::string message = "port " + std::to_string(left_wheel_port) + "; set " +  std::to_string(target_left) + "; port " + std::to_string(right_wheel_port) + "; set " +  std::to_string(target_right) + ";\r";
     boost::asio::write(serial, boost::asio::buffer(message)); 
 
     return return_type::OK;
@@ -327,6 +332,7 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
 
         // Set the baud rate
         serial.set_option(boost::asio::serial_port_base::baud_rate(baud_rate));
+        RCUTILS_LOG_INFO_NAMED(TAG, "Open %s with %i bytes/sec", port_name.c_str(), baud_rate);
 
         // Check if we're in the bootloader or the firmware
         boost::asio::write(serial, boost::asio::buffer("version\r", 8));
@@ -388,7 +394,7 @@ CallbackReturn TuwSpikeSystemInterface::on_configure(
 
             std::string current;
             if (error) {
-                std::cerr << "Error reading from serial port: " << error.message() << std::endl;
+                RCUTILS_LOG_ERROR_NAMED(TAG, "Error reading from serial port: %s", error.message().c_str());
             } else {
                 // process buffer
                 for (char c : buffer) {
