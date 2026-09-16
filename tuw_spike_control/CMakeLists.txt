@@ -77,24 +77,6 @@ install(
         DESTINATION lib/${PROJECT_NAME}
 )
 
-####################
-## test_build_hat ##
-
-# Minimal executable that exercises BuildHatDriver by calling its init() method.
-add_executable(test_build_hat src/test_build_hat.cpp src/build_hat_driver.cpp)
-target_include_directories(test_build_hat PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_features(test_build_hat PUBLIC c_std_99 cxx_std_20)
-target_link_libraries(test_build_hat PUBLIC
-  Boost::headers
-  ament_index_cpp::ament_index_cpp)
-
-install(
-        TARGETS test_build_hat
-        DESTINATION lib/${PROJECT_NAME}
-)
-
 ################
 ## diffdrive  ##
 

@@ -7,9 +7,49 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
+
+###############
+## build_hat ##
+
+# Library implementing the BuildHatDriver.
+add_library(build_hat SHARED src/tuw_build_hat/build_hat.cpp src/tuw_build_hat/sensor.cpp src/tuw_build_hat/motor.cpp)
+target_include_directories(build_hat PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(build_hat PUBLIC c_std_99 cxx_std_20)
+target_link_libraries(build_hat PUBLIC
+  Boost::headers
+)
+
+####################
+## demo ##
+
+# Minimal executable that exercises BuildHatDriver by calling its init() method.
+add_executable(demo src/demo.cpp)
+target_compile_features(demo PUBLIC c_std_99 cxx_std_20)
+target_link_libraries(demo PUBLIC
+  build_hat
+  Boost::program_options
+)
+
+install(
+        TARGETS demo
+        DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+        TARGETS build_hat
+        EXPORT export_${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+)
+
+install(
+        DIRECTORY include/
+        DESTINATION include
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -22,5 +62,16 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+## Ament package exports ##
+ament_export_include_directories(
+        include
+)
+ament_export_libraries(
+        build_hat
+)
+ament_export_targets(
+        export_${PROJECT_NAME}
+)
 
 ament_package()
