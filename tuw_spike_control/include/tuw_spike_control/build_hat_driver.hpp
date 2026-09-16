@@ -3,11 +3,28 @@
 
 #include <boost/asio.hpp>
 #include <cstdint>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace tuw_spike_control {
+
+class Port {
+  public:
+    explicit Port(unsigned int id) : id_(id) {}
+    virtual ~Port() = default;
+
+    virtual void init() = 0;
+
+  protected:
+    unsigned int id_;
+};
+
+class Motor : public Port {
+
+};
+
 
 class BuildHatDriver {
     static constexpr int OK = 0;
@@ -26,6 +43,8 @@ class BuildHatDriver {
 
     void set_firmware(const std::string &firmware, const std::string &signature);
 
+    void set_logfile(const std::string &logfile);
+
     int init();
 
     void activate_with_velocity_mode(int port_id);
@@ -40,6 +59,12 @@ class BuildHatDriver {
 
   private:
     void upload_firmware();
+
+    // write a string to the serial port
+    void serial_write(const std::string &message);
+
+    // read some data from the serial port into buffer, returns the number of bytes read
+    std::size_t serial_read(std::vector<char> &buffer, boost::system::error_code &error);
 
     // read a line from the serial port
     std::string serial_read_line();
@@ -58,6 +83,7 @@ class BuildHatDriver {
     unsigned int baud_rate_;
     std::string path_to_firmware_;
     std::string path_to_signature_;
+    std::ofstream serial_log_;    // if open, the serial communication is logged there
 
     // Declare the io_context and serial port globally
     boost::asio::io_context io_context_;

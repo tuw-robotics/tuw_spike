@@ -12,7 +12,10 @@
 
 namespace tuw_spike_control {
 
-BuildHatDriver::BuildHatDriver() { print_info("BuildHatDriver Created"); }
+BuildHatDriver::BuildHatDriver() {
+    print_info("BuildHatDriver Created");
+    set_logfile("/tmp/spike_serial.log");
+}
 
 void BuildHatDriver::set_device(const std::string &device_name, unsigned int baud_rate) {
     device_name_ = device_name;
@@ -22,6 +25,18 @@ void BuildHatDriver::set_device(const std::string &device_name, unsigned int bau
 void BuildHatDriver::set_firmware(const std::string &firmware, const std::string &signature) {
     path_to_firmware_ = firmware;
     path_to_signature_ = signature;
+}
+
+void BuildHatDriver::set_logfile(const std::string &logfile) {
+    if (serial_log_.is_open()) {
+        serial_log_.close();
+    }
+    if (!logfile.empty()) {
+        serial_log_.open(logfile, std::ios::trunc);
+        if (!serial_log_.is_open()) {
+            print_error("Could not open serial log file: %s", logfile.c_str());
+        }
+    }
 }
 
 int BuildHatDriver::init() {
@@ -38,8 +53,9 @@ int BuildHatDriver::init() {
         // Check if we're in the bootloader or the firmware
         int emptydata = 0;
         int incdata = 0;
-        while (true) {
-            boost::asio::write(*serial_, boost::asio::buffer("version\r", 8));
+        bool firmeware_ready = false;
+        serial_write("version\r");
+        while (firmeware_ready == false) {
             std::string line = serial_read_line();
             if (line.empty()) {
                 ++emptydata;
@@ -73,7 +89,7 @@ int BuildHatDriver::init() {
         int selrate = 10; // sets how often the Build HAT firmware sends unsolicited sensor/motor updates for the currently selected mode on that port [ms]
 
         std::string cmd = "echo 0;\r";
-        boost::asio::write(*serial_, boost::asio::buffer(cmd));
+        serial_write(cmd);
         cmd = "plimit 1; port " + std::to_string(left_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0 ; selrate  " + std::to_string(selrate) + "; pid_diff " + std::to_string(left_wheel_port) + " 0 5 s2 0.0027777778 1 0.1 2.5 0 .4 0.01;\r";
         print_info(cmd.c_str());
         cmd.clear();
@@ -86,11 +102,12 @@ int BuildHatDriver::init() {
         cmd += std::format("\r");
 
         print_info(cmd.c_str());
+        print_info("xx");
 
-        boost::asio::write(*serial_, boost::asio::buffer(cmd));
+        serial_write(cmd);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         cmd = "plimit 1; port " + std::to_string(right_wheel_port) + "; combi 0 1 0 2 0 3 0; select 0; selrate 1; pid_diff " + std::to_string(right_wheel_port) + " 0 5 s2 0.0027777778 1 0.1 2.5 0 .4 0.01;\r";
-        boost::asio::write(*serial_, boost::asio::buffer(cmd));
+        serial_write(cmd);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
@@ -108,7 +125,7 @@ int BuildHatDriver::init() {
         int right_wheel_offset = 0;
 
         while (bytes_read == 128) {
-            bytes_read = serial_->read_some(boost::asio::buffer(buffer), error);
+            bytes_read = serial_read(buffer, error);
             return_msg.append(buffer.data(), bytes_read);
 
             std::string current;
@@ -171,8 +188,20 @@ void BuildHatDriver::deactivate() {
 
     // Close serial port
     if (serial_) {
+        std::string cmd;
+        for (unsigned port_id = 0; port_id <= NUMBER_OF_PORTS; ++port_id) {
+            cmd += std::format("port {};", port_id);
+            cmd += std::format("select ;");
+            cmd += std::format("set 0;");
+        }
+        cmd += std::format("\r;");
+        serial_write(cmd);
         serial_->close();
         serial_.reset();
+    }
+
+    if (serial_log_.is_open()) {
+        serial_log_.close();
     }
 }
 
@@ -182,7 +211,7 @@ void BuildHatDriver::set_target_velocity_radian_per_sec(int port_id, double comm
     std::string message = "port " + std::to_string(port_id) + "; plimit 1; set " + std::to_string(target_left) + ";\r";
 
     print_info("message: %s", message.c_str());
-    boost::asio::write(*serial_, boost::asio::buffer(message));
+    serial_write(message);
 }
 
 double BuildHatDriver::get_position_radian(int dxl_id) { return 0; }
@@ -191,6 +220,8 @@ double BuildHatDriver::get_velocity_radian_per_sec(int dxl_id) { return 0; }
 
 void BuildHatDriver::upload_firmware() {
 
+    print_info("Upload firmware: %s", path_to_firmware_.c_str());
+
     std::ifstream file_firmware(path_to_firmware_, std::ios::binary);
     std::vector<unsigned char> firmware = std::vector<unsigned char>(std::istreambuf_iterator<char>(file_firmware), {});
 
@@ -198,33 +229,51 @@ void BuildHatDriver::upload_firmware() {
     std::vector<unsigned char> signature = std::vector<unsigned char>(std::istreambuf_iterator<char>(file_signature), {});
 
     // clear current image
-    boost::asio::write(*serial_, boost::asio::buffer("clear\r", 6));
+    serial_write("clear\r");
     get_prompt();
 
     // write firmware to serial port
     std::string load_command = "load " + std::to_string(std::filesystem::file_size(path_to_firmware_)) + " " + std::to_string(checksum(firmware)) + "\r";
-    boost::asio::write(*serial_, boost::asio::buffer(load_command));
+    serial_write(load_command);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    boost::asio::write(*serial_, boost::asio::buffer("\x02", 1));
+    serial_write("\x02");
     boost::asio::write(*serial_, boost::asio::buffer(firmware));
-    boost::asio::write(*serial_, boost::asio::buffer("\x03\r", 2));
+    serial_write("\x03\r");
     get_prompt();
 
     // write signature to serial port
     std::string signature_command = "signature " + std::to_string(std::filesystem::file_size(path_to_signature_)) + "\r";
-    boost::asio::write(*serial_, boost::asio::buffer(signature_command));
+    serial_write(signature_command);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    boost::asio::write(*serial_, boost::asio::buffer("\x02", 1));
+    serial_write("\x02");
     boost::asio::write(*serial_, boost::asio::buffer(signature));
-    boost::asio::write(*serial_, boost::asio::buffer("\x03\r", 2));
+    serial_write("\x03\r");
     get_prompt();
 
-    boost::asio::write(*serial_, boost::asio::buffer("reboot\r", 7));
+    serial_write("reboot\r");
 
     // waiting some seconds until reboot is finished
-    int seconds_to_reboot = 5;
+    int seconds_to_reboot = 10;
     print_info("Waiting %d seconds until the board is rebooted", seconds_to_reboot);
     std::this_thread::sleep_for(std::chrono::seconds(seconds_to_reboot));
+}
+
+void BuildHatDriver::serial_write(const std::string &message) {
+    boost::asio::write(*serial_, boost::asio::buffer(message));
+
+    if (serial_log_.is_open()) {
+        serial_log_ << "TX: " << message << std::endl;
+    }
+}
+
+std::size_t BuildHatDriver::serial_read(std::vector<char> &buffer, boost::system::error_code &error) {
+    std::size_t bytes_read = serial_->read_some(boost::asio::buffer(buffer), error);
+
+    if (serial_log_.is_open()) {
+        serial_log_ << std::string(buffer.data(), bytes_read) << std::endl;
+    }
+
+    return bytes_read;
 }
 
 std::string BuildHatDriver::serial_read_line() {
@@ -232,6 +281,11 @@ std::string BuildHatDriver::serial_read_line() {
     std::istream is(&buf);
     std::string line;
     std::getline(is, line);
+
+    if (serial_log_.is_open()) {
+        serial_log_ << "RX: " << line << std::endl;
+    }
+
     return line;
 }
 
