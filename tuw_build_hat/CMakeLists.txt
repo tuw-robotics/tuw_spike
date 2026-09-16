@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 project(tuw_build_hat)
 
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -13,7 +17,7 @@ find_package(Boost REQUIRED COMPONENTS program_options)
 ## build_hat ##
 
 # Library implementing the BuildHatDriver.
-add_library(build_hat SHARED src/tuw_build_hat/build_hat.cpp src/tuw_build_hat/sensor.cpp src/tuw_build_hat/motor.cpp)
+add_library(build_hat SHARED src/tuw_build_hat/build_hat.cpp src/tuw_build_hat/device.cpp src/tuw_build_hat/motor.cpp)
 target_include_directories(build_hat PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)

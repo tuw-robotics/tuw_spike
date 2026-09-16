@@ -2,3 +2,27 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 UseTab: Never
 ColumnLimit: 250
+
+BreakBeforeBraces: Attach
+
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+
+BinPackArguments: false
+BinPackParameters: false
+
+BraceWrapping:
+  AfterEnum: true
+  AfterFunction: true
+  AfterClass: true
+  AfterControlStatement: true
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+
+PenaltyBreakAssignment: 50
+PenaltyReturnTypeOnItsOwnLine: 100
+PenaltyBreakBeforeFirstCallParameter: 200
+ReflowComments: true

@@ -55,15 +55,15 @@ int main(int argc, char **argv) {
     driver.set_logfile_serial(filename_serial_log);
     driver.set_logfile_msgs(filename_msgs_log);
     driver.set_loglevel(loglevel);
-    driver.add_sensor(left_motor);
-    driver.add_sensor(right_motor);
+    driver.add_device(left_motor);
+    driver.add_device(right_motor);
     int result = driver.init();
 
-    right_motor->set_target_radian_per_sec(3.14);
-    left_motor->set_target_radian_per_sec(0.2);
+    right_motor->set_target_radian_per_sec(M_PI/8.0, 0.003, 0.01, 0.00);
+    left_motor->set_target_radian_per_sec(M_PI*2.);
     driver.commit();
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    left_motor->set_target_radian_per_sec(-0.2);
+    left_motor->set_target_radian_per_sec(-M_PI*2.);
     driver.commit();
     std::this_thread::sleep_for(std::chrono::seconds(5));
     left_motor->set_target_radian_per_sec(0.0);

@@ -20,7 +20,9 @@ static std::string current_datetime_string() {
     return oss.str();
 }
 
-BuildHat::BuildHat() { msg(LogLevel::INFO, "BuildHat Created"); }
+BuildHat::BuildHat() {
+    msg(LogLevel::INFO, "BuildHat Created");
+}
 
 void BuildHat::set_device(const std::string &device_name, unsigned int baud_rate) {
     device_name_ = device_name;
@@ -32,7 +34,22 @@ void BuildHat::set_firmware(const std::string &firmware, const std::string &sign
     path_to_signature_ = signature;
 }
 
-void BuildHat::add_sensor(const std::shared_ptr<Sensor> &sensor) { ports.push_back(sensor); }
+void BuildHat::add_device(const std::shared_ptr<Device> &device) {
+    for(const auto &registed_device: devices_){
+        if (registed_device->port() == device->port()){
+            msg(LogLevel::ERROR, "Could not add device %s, port %d allredy used by a: %s", registed_device->info().c_str(), device->port(), device->info().c_str());
+            return;
+        }
+    }
+    devices_.push_back(device);
+}
+
+void BuildHat::remove_device(unsigned int port) {
+    std::erase_if(devices_, [port](const std::shared_ptr<Device> &device) {
+        return device->port() == port;
+    });
+}
+
 void BuildHat::set_logfile_serial(const std::string &logfile) {
     if (serial_log_.is_open()) {
         serial_log_.close();
@@ -60,9 +77,13 @@ void BuildHat::set_logfile_msgs(const std::string &msgfile) {
         }
     }
 }
-void BuildHat::set_loglevel(LogLevel loglevel) { loglevel_ = loglevel; }
+void BuildHat::set_loglevel(LogLevel loglevel) {
+    loglevel_ = loglevel;
+}
 
-void BuildHat::set_loglevel(int loglevel) { set_loglevel(static_cast<LogLevel>(loglevel)); }
+void BuildHat::set_loglevel(int loglevel) {
+    set_loglevel(static_cast<LogLevel>(loglevel));
+}
 
 int BuildHat::init() {
     msg(LogLevel::INFO, "BuildHat init");
@@ -79,9 +100,14 @@ int BuildHat::init() {
         int emptydata = 0;
         int incdata = 0;
         bool firmeware_ready = false;
+        boost::system::error_code error;
         serial_write("version\r");
         while (firmeware_ready == false) {
-            std::string line = serial_read_line();
+            std::string line = serial_read_line(error);
+            if (error) {
+                msg(LogLevel::ERROR, "Error reading from serial port: %s", error.message().c_str());
+                return ERROR;
+            }
             if (line.empty()) {
                 ++emptydata;
                 if (emptydata > 3) {
@@ -113,7 +139,7 @@ int BuildHat::init() {
 
         std::string cmd = "echo 0;\r";
         serial_write(cmd);
-        for (const auto &sensor : ports) {
+        for (const auto &sensor : devices_) {
             sensor->init();
             msg(LogLevel::DEBUG, sensor->cmd().c_str());
             serial_write(sensor->get_and_clear_command());
@@ -130,16 +156,18 @@ int BuildHat::init() {
 }
 
 int BuildHat::commit() {
-    for (const auto &sensor : ports) {
-        if (sensor->has_cmd()) {
-            msg(LogLevel::DEBUG, sensor->cmd().c_str());
-            serial_write(sensor->get_and_clear_command());
+    for (const auto &device : devices_) {
+        if (device->has_cmd()) {
+            msg(LogLevel::DEBUG, device->cmd().c_str());
+            serial_write(device->get_and_clear_command());
         }
     }
     return OK;
 }
 
-void BuildHat::activate_with_velocity_mode(int port_id) { msg(LogLevel::INFO, "BuildHat activate_with_velocity_mode %d", port_id); }
+void BuildHat::activate_with_velocity_mode(int port_id) {
+    msg(LogLevel::INFO, "BuildHat activate_with_velocity_mode %d", port_id);
+}
 
 void BuildHat::deactivate() {
     msg(LogLevel::INFO, "BuildHat deactivate");
@@ -149,11 +177,11 @@ void BuildHat::deactivate() {
     // Close serial port
     if (serial_) {
         std::string cmd;
-        for (const auto &sensor : ports) {
-            sensor->deactivate();
-            if (sensor->has_cmd()) {
-                msg(LogLevel::DEBUG, sensor->cmd().c_str());
-                serial_write(sensor->get_and_clear_command());
+        for (const auto &device : devices_) {
+            device->deactivate();
+            if (device->has_cmd()) {
+                msg(LogLevel::DEBUG, device->cmd().c_str());
+                serial_write(device->get_and_clear_command());
             }
         }
         serial_write(cmd);
@@ -189,7 +217,9 @@ void BuildHat::upload_firmware() {
 
     // clear current image
     serial_write("clear\r");
-    get_prompt();
+    if (!get_prompt()) {
+        return;
+    }
 
     // write firmware to serial port
     std::string load_command = "load " + std::to_string(std::filesystem::file_size(path_to_firmware_)) + " " + std::to_string(checksum(firmware)) + "\r";
@@ -198,7 +228,9 @@ void BuildHat::upload_firmware() {
     serial_write("\x02");
     boost::asio::write(*serial_, boost::asio::buffer(firmware));
     serial_write("\x03\r");
-    get_prompt();
+    if (!get_prompt()) {
+        return;
+    }
 
     // write signature to serial port
     std::string signature_command = "signature " + std::to_string(std::filesystem::file_size(path_to_signature_)) + "\r";
@@ -207,7 +239,9 @@ void BuildHat::upload_firmware() {
     serial_write("\x02");
     boost::asio::write(*serial_, boost::asio::buffer(signature));
     serial_write("\x03\r");
-    get_prompt();
+    if (!get_prompt()) {
+        return;
+    }
 
     serial_write("reboot\r");
 
@@ -235,8 +269,8 @@ std::size_t BuildHat::serial_read(std::vector<char> &buffer, boost::system::erro
     return bytes_read;
 }
 
-std::string BuildHat::serial_read_line() {
-    boost::asio::read_until(*serial_, buf, '\n');
+std::string BuildHat::serial_read_line(boost::system::error_code &error) {
+    boost::asio::read_until(*serial_, buf, '\n', error);
     std::istream is(&buf);
     std::string line;
     std::getline(is, line);
@@ -248,12 +282,17 @@ std::string BuildHat::serial_read_line() {
     return line;
 }
 
-void BuildHat::get_prompt() {
+bool BuildHat::get_prompt() {
     std::string bootloader_str = "BHBL>";
+    boost::system::error_code error;
     while (true) {
-        std::string line = serial_read_line();
+        std::string line = serial_read_line(error);
+        if (error) {
+            msg(LogLevel::ERROR, "Error reading from serial port: %s", error.message().c_str());
+            return false;
+        }
         if (line.find(bootloader_str) != std::string::npos) {
-            break;
+            return true;
         }
     }
 }
@@ -290,7 +329,6 @@ void BuildHat::msg(LogLevel level, const char *format, ...) {
     }
 }
 
-
 void BuildHat::serial_start_read() {
     if (reading_) {
         return;
@@ -310,18 +348,25 @@ void BuildHat::serial_stop_read() {
 }
 
 void BuildHat::serial_read_loop() {
-    std::vector<char> buffer(128);
     boost::system::error_code error;
 
     while (reading_) {
-        std::string line = serial_read_line();
+        std::string line = serial_read_line(error);
         if (error) {
             if (reading_) {
                 msg(LogLevel::ERROR, "Error reading from serial port: %s", error.message().c_str());
             }
             break;
         }
-        (void)line;
+        for (auto &device : devices_) {
+            if(device->is_feedback(line)){
+                int decoding = device->decode(line);
+                if(decoding != DECODE_OK){
+                    msg(LogLevel::ERROR, "Error decoding message for device on port: %d", device->port());
+                    msg(LogLevel::ERROR, " - the message was: %s", line.c_str());
+                }
+            }
+        }
     }
 }
 
