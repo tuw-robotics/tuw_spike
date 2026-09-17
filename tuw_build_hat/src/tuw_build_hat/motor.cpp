@@ -51,8 +51,8 @@ void Motor::set_target_radian_per_sec(double speed, double kp, double ki, double
     double pwmthresh = 0.65; // threshold for slow/fast PWM switchover (default 0)
     double minpwm = 0.01;    // minimum PWM driver input value (default 0)
     cmd_ += std::format("port {}; ", port_);
-    cmd_ += std::format("pwmparams {} {}", pwmthresh, minpwm);                                                                                            // configure parameters for PWM driver
-    cmd_ += std::format("pid {} {} {} {} {} {} {} {} {} {} {}; ", pvport, pvmode, pvoffset, pvformat, pvscale, pvunwrap, kp_, ki_, kd_, windup, deadzone); // updates rate
+    cmd_ += std::format("pwmparams {} {}", pwmthresh, minpwm);                                                                                            
+    cmd_ += std::format("pid {} {} {} {} {} {} {} {} {} {} {}; ", pvport, pvmode, pvoffset, pvformat, pvscale, pvunwrap, kp_, ki_, kd_, windup, deadzone);
     cmd_ += std::format("set {}; ", percent);
     cmd_ += std::format("\r");
 }
@@ -86,7 +86,7 @@ int Motor::decode(const std::string &line) {
         return BuildHat::DECODE_ERROR;
     }
 
-    rps_ = Device::convert_percent_to_speed(speed_percent, MAX_RAD_PER_SEC);
+    speed_current_ = Device::convert_percent_to_speed(speed_percent, MAX_RAD_PER_SEC);
     cumulative_rad_ = Device::convert_deg_to_rad(cumulative_deg);
     absolute_rad_ = Device::normalize_rad(Device::convert_deg_to_rad(absolute_deg));
 

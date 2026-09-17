@@ -195,16 +195,6 @@ void BuildHat::deactivate() {
     }
 }
 
-double BuildHat::get_position_radian(int port_id) {
-    msg(LogLevel::INFO, "BuildHat get_position_radian %d", port_id);
-    return 0;
-}
-
-double BuildHat::get_velocity_radian_per_sec(int port_id) {
-    msg(LogLevel::INFO, "BuildHat get_velocity_radian_per_sec %d", port_id);
-    return 0;
-}
-
 void BuildHat::upload_firmware() {
 
     msg(LogLevel::INFO, "Upload firmware: %s", path_to_firmware_.c_str());

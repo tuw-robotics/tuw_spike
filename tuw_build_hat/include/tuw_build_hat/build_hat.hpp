@@ -14,28 +14,38 @@
 
 namespace tuw_build_hat {
 
+/**
+ * @brief Driver for a Raspberry Pi Build HAT, talking to it over a direct serial link.
+ *
+ * Owns the serial connection, uploads firmware to the bootloader if needed, and dispatches
+ * commands and feedback for a set of registered Device instances (e.g. Motor). Typical usage:
+ * construct a BuildHat, call set_device()/set_firmware() (and optionally set_loglevel() and the
+ * set_logfile_*() setters), add_device() one Device per Build HAT port, call init(), then drive
+ * devices and call commit() to flush their queued commands, finishing with deactivate().
+ */
 class BuildHat {
   public:
-    static constexpr int OK = 0;
-    static constexpr int ERROR = 1;
+    static constexpr int OK = 0;    ///< return value of init()/commit() on success
+    static constexpr int ERROR = 1; ///< return value of init() on failure
 
-    static constexpr int NUMBER_OF_PORTS = 4;
-    static constexpr int LIMIT_ON = 1;
-    static constexpr int LIMIT_OFF = 0;
-    static constexpr int MODE_SPEED = 1;
-    static constexpr int MODE_POS = 2;
-    static constexpr int MODE_APOS = 3;
-    static constexpr int DECODE_OK = 0;
-    static constexpr int DECODE_ERROR = 1;
+    static constexpr int NUMBER_OF_PORTS = 4; ///< number of physical ports on a Build HAT
+    static constexpr int LIMIT_ON = 1;        ///< value passed to the "plimit"/"port_plimit" command to enable the power limit
+    static constexpr int LIMIT_OFF = 0;       ///< value passed to the "plimit"/"port_plimit" command to disable the power limit
+    static constexpr int MODE_SPEED = 1;      ///< Build HAT combi-mode index for speed feedback
+    static constexpr int MODE_POS = 2;        ///< Build HAT combi-mode index for cumulative position feedback
+    static constexpr int MODE_APOS = 3;       ///< Build HAT combi-mode index for absolute position feedback
+    static constexpr int DECODE_OK = 0;       ///< return value of Device::decode() when a feedback line was parsed successfully
+    static constexpr int DECODE_ERROR = 1;    ///< return value of Device::decode() when a feedback line could not be parsed
 
-    
+    /**
+     * @brief Severity levels used by set_loglevel() and msg() to filter log output.
+     */
     enum class LogLevel {
-        DEBUG = 0,
-        INFO = 1,
-        WARNING = 2,
-        ERROR = 3,
+        DEBUG = 0,   ///< verbose diagnostic messages
+        INFO = 1,    ///< normal operational messages
+        WARNING = 2, ///< unexpected but recoverable conditions
+        ERROR = 3,   ///< failures
     };
-
 
   public:
     /**
@@ -103,14 +113,17 @@ class BuildHat {
 
     /**
      * @brief Send any pending commands queued up by the registered devices to the Build HAT.
+     *
+     * Call this after issuing commands on one or more registered devices (e.g.
+     * Motor::set_target_radian_per_sec()) to actually write them to the serial port.
      * @return OK on success
-     * @pre commands on the registed devices
      */
     int commit();
 
     /**
      * @brief Activate a port in velocity control mode.
      * @param port_id id of the port to activate
+     * @note currently a stub: only logs the request, does not yet send a command
      */
     void activate_with_velocity_mode(int port_id);
 
@@ -119,19 +132,6 @@ class BuildHat {
      */
     void deactivate();
 
-    /**
-     * @brief Get the last known position of a port.
-     * @param port_id id of the port to query
-     * @return position in radians
-     */
-    double get_position_radian(int port_id);
-
-    /**
-     * @brief Get the last known velocity of a port.
-     * @param port_id id of the port to query
-     * @return velocity in radians per second
-     */
-    double get_velocity_radian_per_sec(int port_id);
 
   private:
     /**
@@ -195,22 +195,21 @@ class BuildHat {
      */
     void msg(LogLevel level, const char *format, ...);
 
-    std::string device_name_;
-    unsigned int baud_rate_;
-    std::string path_to_firmware_;
-    std::string path_to_signature_;
-    LogLevel loglevel_;
-    std::ofstream serial_log_;    // if open, the serial communication is logged there
-    std::ofstream msg_log_;       // if open, the msgs is logged there
+    std::string device_name_;         ///< path to the serial device, set via set_device()
+    unsigned int baud_rate_;          ///< baud rate to open the serial port with, set via set_device()
+    std::string path_to_firmware_;    ///< path to the firmware binary, set via set_firmware()
+    std::string path_to_signature_;   ///< path to the signature binary, set via set_firmware()
+    LogLevel loglevel_;                ///< minimum severity level logged by msg(), set via set_loglevel()
+    std::ofstream serial_log_;        ///< if open, the raw serial communication is logged here
+    std::ofstream msg_log_;           ///< if open, driver messages are logged here instead of std::cout/std::cerr
 
-    // Declare the io_context and serial port globally
-    boost::asio::io_context io_context_;
-    std::unique_ptr<boost::asio::serial_port> serial_;
-    boost::asio::streambuf buf;
-    std::vector<std::shared_ptr<Device>> devices_;
+    boost::asio::io_context io_context_;               ///< io_context backing the serial port
+    std::unique_ptr<boost::asio::serial_port> serial_;  ///< the open serial connection to the Build HAT, null until init()
+    boost::asio::streambuf buf;                         ///< streambuf used to buffer incoming data for serial_read_line()
+    std::vector<std::shared_ptr<Device>> devices_;      ///< devices registered via add_device(), one per Build HAT port
 
-    std::thread read_thread_;
-    std::atomic<bool> reading_{false};
+    std::thread read_thread_;         ///< background thread running serial_read_loop(), started by serial_start_read()
+    std::atomic<bool> reading_{false}; ///< true while the background read thread should keep running
 };
 } // namespace tuw_build_hat
 
